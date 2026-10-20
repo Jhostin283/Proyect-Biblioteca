@@ -53,9 +53,9 @@
       "dependencies": [
         "feat-002"
       ],
-      "status": "in-progress",
+      "status": "done",
     "openspec_change": "add-user-authentication",
-    "evidence": "Tareas 1.1-6.3 completadas (tasks.md 20/20): uv run pytest -q -> 33 passed (test_auth 16, test_auth_service 8, test_security 7, test_health 2); ./scripts/check.sh --full -> CHECK OK con SMOKE OK (health, SPA, fallback); npx ng build -> OK; en vivo en http://localhost:8080: login admin@library.local -> 200, GET /api/auth/me -> 200 con role admin, register dominio .local -> 201, email malformado -> 422. D10: EmailField acepta special-use (.local) del contrato; ruff check/format limpio."
+    "evidence": "Tareas 1.1-6.3 completadas (tasks.md 21/21): uv run pytest -q -> 33 passed (test_auth 16, test_auth_service 8, test_security 7, test_health 2); ./scripts/check.sh --full -> CHECK OK con SMOKE OK (health, SPA, fallback); npx ng build -> OK; en vivo en http://localhost:8080: login admin@library.local -> 200, GET /api/auth/me -> 200 con role admin, register dominio .local -> 201, email malformado -> 422. D10: EmailField acepta special-use (.local) del contrato; ruff check/format limpio. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-user-authentication; specs de authentication sincronizados."
     },
     {
       "id": "feat-004",
