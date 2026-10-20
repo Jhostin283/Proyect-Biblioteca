@@ -1,0 +1,98 @@
+schema: spec-driven
+
+# ============================================================================
+# 1. CONTEXTO DEL PROYECTO (restricciones, no documentación)
+# ============================================================================
+context: |
+  Proyecto: Sistema de Gestión de Libros (Grupo 2) - módulos: Autenticación y Autorización (dev-a) y Gestión de Libros (dev-b).
+  Tipo: aplicación web full-stack (API REST + SPA) en la nube, construida por dos desarrolladores en dos máquinas.
+  Alcance, roles, modelo de datos, reglas de negocio (BR-1 a BR-12), contrato de la API y reparto: docs/PRODUCT.md.
+  Nunca agregues alcance fuera de docs/PRODUCT.md; si un cambio lo necesita, pregunta al usuario.
+
+  Idioma:
+  - Responde al usuario en español.
+  - Escribe en español: artefactos de OpenSpec, ADRs, documentación, comentarios del código, mensajes impresos,
+    textos de la interfaz y descripción de los commits.
+  - Escribe en inglés: nombres de archivos y carpetas, identificadores del código, rutas de la API, tablas y columnas,
+    claves de JSON/YAML y el tipo del commit.
+  - En las specs, mantén en inglés los encabezados y palabras clave que OpenSpec valida: "## ADDED Requirements",
+    "### Requirement:", "#### Scenario:", SHALL o MUST, y las viñetas **GIVEN**, **WHEN**, **THEN**, **AND**.
+
+  Stack (fijo; cambiarlo requiere un ADR):
+  - Backend: Python 3.12, FastAPI, SQLAlchemy 2.0 (Mapped[]), Pydantic v2, Alembic. Gestor de paquetes: uv.
+  - Seguridad: JWT con PyJWT (HS256, 60 min), contraseñas con pwdlib[argon2], roles reader/librarian/admin.
+  - Frontend: Angular (standalone components, signals, TypeScript estricto).
+  - Base de datos: PostgreSQL 16.
+  - Testing: pytest + httpx (backend); Vitest vía Angular CLI (frontend).
+  - Contenedores y entrega: Docker + Docker Compose; CI/CD con GitHub Actions; imágenes en GHCR.
+  - Infraestructura como código: Terraform en infra/terraform/ (proveedor AWS, estado local en dev-a) crea una
+    EC2 t3.micro (Ubuntu 24.04, security group: 22 solo desde la IP del admin, 80 público) iniciada con
+    infra/terraform/user-data.sh. El agente nunca ejecuta terraform apply ni destroy; lo hace el usuario.
+
+  Arquitectura (por defecto): capas (Layered).
+  - Routes/Controllers: validan entrada y salida y devuelven códigos HTTP; sin lógica de negocio.
+  - Services: toda la lógica de negocio; no conocen el framework web.
+  - Repositories: el único lugar que consulta la base de datos.
+  - Dependencias: routes -> services -> repositories -> models (nunca al revés).
+  - Carpetas backend: backend/app/api/routes/, services/, repositories/, models/, schemas/
+  - Carpetas frontend: frontend/src/app/core/ (servicios HTTP), features/<feature>/ (páginas), shared/
+  Las decisiones de ./adr/ con estado "Accepted" prevalecen sobre este texto.
+
+  Restricciones:
+  - API REST bajo /api con códigos HTTP estándar (200/201/204/404/409/422) y mensajes de error en español.
+  - Configuración solo por variables de entorno; nunca se suben secretos.
+  - Cambios de esquema de la BD solo con migraciones.
+  - Dependencias nuevas (pyproject.toml / package.json) solo si se justifican en design.md.
+  - Terminado significa que ./scripts/check.sh termina en CHECK OK y la evidencia queda en feature_list.json.
+  - El estado de las features vive en feature_list.json (una por cambio de OpenSpec, con owner); las notas, en progress/<owner>.md.
+
+# ============================================================================
+# 2. REGLAS POR ARTEFACTO (se suman a la guía oficial de OpenSpec)
+#    Cada regla va entre comillas simples: un ": " o un " #" sin comillas rompe el YAML en silencio.
+# ============================================================================
+rules:
+  proposal:
+    - 'Si el pedido es ambiguo en alcance, comportamiento observable o criterios de aceptación, usa la skill grill-me antes de redactar.'
+    - 'En la sección Why cita los requisitos (RF-xx, RNF-xx) y las reglas de negocio (BR-x) de docs/PRODUCT.md que cubre el cambio, e indica la máquina dueña.'
+    - 'En la sección What Changes incluye una subsección "Fuera de alcance".'
+    - 'Máximo unas 400 palabras. Nombra las capacidades en kebab-case y en inglés por dominio (authentication, authorization, user-administration, books, infrastructure, deployment).'
+
+  specs:
+    - 'Toda ruta protegida tiene escenarios para 401 (sin token) y 403 (rol insuficiente), además del caso de éxito.'
+    - 'Un requisito = un comportamiento, redactado en español con la palabra SHALL o MUST en inglés (ejemplo: El sistema SHALL rechazar...).'
+    - 'Escenarios con "#### Scenario:" (exactamente 4 #) y viñetas "- **GIVEN**", "- **WHEN**", "- **THEN**", "- **AND**" en inglés y el texto en español. Nunca uses bloques Gherkin (Feature:).'
+    - 'Cada requisito tiene al menos un escenario de éxito y uno de error o caso borde. Menciona el RF de docs/PRODUCT.md en la descripción del requisito (ejemplo: (RF-10)).'
+    - 'En MODIFIED copia el requisito completo con todos sus escenarios.'
+    - 'La infraestructura también es una capacidad (infrastructure): especifica propiedades observables como puertos abiertos, tipo de instancia, sistema operativo y outputs de Terraform.'
+
+  design:
+    - 'Antes de diseñar, lee los ADR con estado Accepted en ./adr/ y respeta sus reglas; si el diseño los contradice, detente y propone /adr-supersede.'
+    - 'Si el cambio cruza contenedores (frontend, API, base de datos o servicio externo) o es el primer cambio del proyecto, usa la skill c4-diagrams.'
+    - 'Define los contratos (endpoints con método, ruta, permiso, request, response y códigos; tablas y columnas; interfaces o tipos compartidos) y verifica que coincidan con docs/PRODUCT.md secciones 3 a 7.'
+    - 'Lista los archivos que toca el cambio y confirma que pertenecen a la máquina dueña (docs/PRODUCT.md sección 9); marca cualquier archivo compartido.'
+    - 'Cada decisión indica la alternativa descartada. Si afecta a cambios futuros, márcala "Requiere ADR" y sugiere /adr.'
+    - 'Si hay migración de BD o cambio de despliegue, incluye un Migration Plan con rollback.'
+    - 'Para cambios de infraestructura, usa la skill terraform-aws y lista cada recurso de AWS, variable y output, además del procedimiento de plan y apply que ejecuta el usuario.'
+
+  tasks:
+    - 'Ordena los grupos por las capas de la arquitectura vigente (datos → lógica → API → UI); cada grupo incluye sus propios tests.'
+    - 'Cada tarea toca como máximo 1 o 2 archivos y termina con "— verify:" seguido de un comando o un resultado observable.'
+    - 'Si cambian los modelos, agrega una tarea explícita para generar y aplicar la migración.'
+    - 'Para recursos CRUD, sigue el orden de la skill fullstack-feature.'
+    - 'Las tareas de infraestructura se verifican con ./scripts/check.sh (terraform fmt y validate); terraform plan y apply son tareas aparte marcadas como ejecutadas por el usuario.'
+    - 'El último grupo es "Verificación de integración" y su última tarea es "Ejecutar ./scripts/check.sh --full y registrar el resultado en feature_list.json".'
+
+# ============================================================================
+# 3. GUÍA DE OPERACIONES (consejos opcionales)
+# ============================================================================
+operations:
+  apply:
+    guidance:
+      - 'Al empezar, aplica la skill git-discipline (árbol limpio, rama feat/<change> al día con main y plan commiteado) y pon la feature correspondiente en in-progress.'
+      - 'Ejecuta ./scripts/check.sh después de cada grupo de tareas y antes de marcarlas [x]; nunca avances con los sensores en rojo.'
+      - 'Si una tarea necesita algo fuera de design.md, de un ADR aceptado o de los archivos de esta máquina, pausa y sugiere /opsx-update, /adr o hablar con el otro desarrollador.'
+  archive:
+    guidance:
+      - 'Confirma que /opsx-verify no reportó problemas CRITICAL antes de archivar.'
+      - 'Pon la feature correspondiente de feature_list.json en done con su evidencia y actualiza progress/<owner>.md.'
+      - 'Si durante el cambio se tomó una decisión estructural sin ADR, indícalo antes de cerrar.'

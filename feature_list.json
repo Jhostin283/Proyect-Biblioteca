@@ -1,0 +1,123 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "Esqueleto del proyecto y health check",
+      "description": "[RNF-08] Esqueletos de FastAPI y Angular siguiendo el contrato de AGENTS.md, con GET /api/health visible en la página de inicio y una barra de navegación. Ejecutar /scaffold.",
+      "owner": "dev-b",
+      "dependencies": [],
+      "status": "not-started",
+      "openspec_change": "bootstrap-project",
+      "evidence": ""
+    },
+    {
+      "id": "feat-002",
+      "name": "Contrato del dominio",
+      "description": "[base de RF-01 a RF-16] Tablas users y books en una sola migración; enum Role (reader, librarian, admin); schemas compartidos; app/api/deps.py con las firmas de get_current_user y require_roles; fixture auth_as(role) en tests/conftest.py; routers vacíos de auth, users y books registrados en main.py; rutas lazy de Angular y archivos vacíos de core/auth. Ver docs/PRODUCT.md secciones 4, 6, 7 y 9.",
+      "owner": "shared",
+      "dependencies": [
+        "feat-001"
+      ],
+      "status": "not-started",
+      "openspec_change": "define-domain-contract",
+      "evidence": ""
+    },
+    {
+      "id": "feat-006",
+      "name": "Infraestructura AWS con Terraform",
+      "description": "[RNF-02, RNF-03] infra/terraform crea la EC2 t3.micro (Ubuntu 24.04, SG con 22 solo desde la IP de dev-a y 80 público, Elastic IP, user-data.sh, outputs). dev-a ejecuta plan/apply y carga los secrets EC2_HOST, EC2_USER y EC2_SSH_KEY.",
+      "owner": "dev-a",
+      "dependencies": [],
+      "status": "not-started",
+      "openspec_change": "provision-aws-infrastructure",
+      "evidence": ""
+    },
+    {
+      "id": "feat-003",
+      "name": "Registro, login con JWT y perfil",
+      "description": "[RF-01 a RF-04, RNF-01] POST /api/auth/register, POST /api/auth/login, GET /api/auth/me; hash argon2, JWT HS256 de 60 minutos, admin inicial desde ADMIN_EMAIL/ADMIN_PASSWORD (BR-1 a BR-6, BR-8); páginas /login, /register y /profile.",
+      "owner": "dev-a",
+      "dependencies": [
+        "feat-002"
+      ],
+      "status": "not-started",
+      "openspec_change": "add-user-authentication",
+      "evidence": ""
+    },
+    {
+      "id": "feat-004",
+      "name": "Autorización por roles",
+      "description": "[RF-05, RF-06] Implementación real de get_current_user y require_roles (401/403); en Angular: AuthService, authInterceptor, authGuard, roleGuard y cierre de sesión en la barra de navegación.",
+      "owner": "dev-a",
+      "dependencies": [
+        "feat-003"
+      ],
+      "status": "not-started",
+      "openspec_change": "add-role-authorization",
+      "evidence": ""
+    },
+    {
+      "id": "feat-005",
+      "name": "Administración de usuarios",
+      "description": "[RF-07 a RF-09] GET /api/users y PATCH /api/users/{id} solo para admin (cambiar rol y activar o desactivar, BR-7); página /users.",
+      "owner": "dev-a",
+      "dependencies": [
+        "feat-004"
+      ],
+      "status": "not-started",
+      "openspec_change": "add-user-administration",
+      "evidence": ""
+    },
+    {
+      "id": "feat-007",
+      "name": "CRUD de libros con permisos por rol",
+      "description": "[RF-10 a RF-12] GET/POST/PUT/DELETE /api/books: lectura para usuarios autenticados, escritura solo librarian y admin; ISBN único (409), año válido (422), created_by desde el usuario autenticado (BR-9 a BR-11); páginas /books/new y /books/:id/edit.",
+      "owner": "dev-b",
+      "dependencies": [
+        "feat-002"
+      ],
+      "status": "not-started",
+      "openspec_change": "add-book-management",
+      "evidence": ""
+    },
+    {
+      "id": "feat-008",
+      "name": "Búsqueda, filtro, paginación y detalle",
+      "description": "[RF-13 a RF-16, RNF-07] GET /api/books?q=&genre=&page=&size= con respuesta {items, total, page, size} (BR-12), GET /api/books/genres; catálogo /books con buscador, filtro por género y paginación; detalle /books/:id; botones de edición visibles solo para librarian y admin.",
+      "owner": "dev-b",
+      "dependencies": [
+        "feat-007"
+      ],
+      "status": "not-started",
+      "openspec_change": "add-book-search",
+      "evidence": ""
+    },
+    {
+      "id": "feat-009",
+      "name": "CI/CD con GitHub Actions",
+      "description": "[RNF-04, RNF-06] CI obligatorio en cada Pull Request (protección de la rama main), despliegue a la EC2 al hacer merge a main y smoke test contra la IP pública. Usa la EC2 y los secrets de feat-006.",
+      "owner": "dev-b",
+      "dependencies": [
+        "feat-001",
+        "feat-006"
+      ],
+      "status": "not-started",
+      "openspec_change": "setup-continuous-deployment",
+      "evidence": ""
+    },
+    {
+      "id": "feat-010",
+      "name": "Release: integración, despliegue y demo",
+      "description": "[todos] Todo integrado en main, CI en verde, desplegado en la EC2 y demo: registrarse, comprobar que un reader no puede crear libros (403), entrar como admin, cambiar el rol, crear un libro y buscarlo.",
+      "owner": "shared",
+      "dependencies": [
+        "feat-005",
+        "feat-008",
+        "feat-009"
+      ],
+      "status": "not-started",
+      "openspec_change": "release-v1",
+      "evidence": ""
+    }
+  ]
+}

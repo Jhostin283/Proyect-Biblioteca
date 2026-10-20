@@ -1,0 +1,59 @@
+# Producción en la EC2 t3.micro: solo imágenes de GHCR (sin build) y límites de memoria.
+# IMAGE_PREFIX y TAG los escribe el pipeline en ~/app/.env
+name: library-g2
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command: >
+      postgres -c shared_buffers=64MB -c max_connections=30 -c work_mem=2MB
+      -c maintenance_work_mem=32MB -c effective_cache_size=192MB
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB en .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 320m
+    logging: *logging
+
+  backend:
+    image: ${IMAGE_PREFIX:?falta IMAGE_PREFIX}-backend:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET en .env}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?falta ADMIN_EMAIL en .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?falta ADMIN_PASSWORD en .env}
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 256m
+    logging: *logging
+
+  frontend:
+    image: ${IMAGE_PREFIX:?falta IMAGE_PREFIX}-frontend:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 64m
+    logging: *logging
+
+volumes:
+  pgdata:

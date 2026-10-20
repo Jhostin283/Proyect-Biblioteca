@@ -1,0 +1,60 @@
+# --- Harness: identidad de cada máquina (nunca se comparte) ---
+.harness-owner
+
+# --- Secretos y credenciales ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.db
+*.sqlite3
+
+# --- Node / Angular / React / Next ---
+node_modules/
+dist/
+.angular/
+.next/
+.nuxt/
+.astro/
+coverage/
+
+# --- Java / .NET / Go / Rust ---
+target/
+build/
+obj/
+*.class
+
+# --- Terraform (sí se suben .terraform.lock.hcl y *.tfvars.example) ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+tfplan
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+
+# --- Sistema operativo, editores y logs ---
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- REGLA SDD: nunca ignorar openspec/, .opencode/, adr/, AGENTS.md ni opencode.json ---
