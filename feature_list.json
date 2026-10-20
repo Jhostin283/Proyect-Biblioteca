@@ -41,9 +41,9 @@
       "dependencies": [
         "feat-001"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "define-domain-contract",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (tablas users y books, alembic head 0001, lazy routes, auth_as fixture, pytest OK)"
     },
     {
       "id": "feat-003",
