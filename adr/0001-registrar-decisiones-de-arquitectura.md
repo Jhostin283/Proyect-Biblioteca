@@ -13,7 +13,7 @@ podría proponer diseños que contradicen decisiones ya tomadas por el otro.
 
 ## Decisión
 Registraremos cada decisión estructural como un ADR en ./adr/ (formato MADR simplificado, en español),
-gestionado con los comandos /adr, /adr-supersede y /adr-review, e integrado a `main` por Pull Request.
+gestionado con los comandos /adr, /adr-supersede y /adr-review, e integrado a `develop` por Pull Request.
 
 ## Consecuencias
 - **Positivas:** el porqué queda trazable y ambos agentes leen los mismos ADR antes de diseñar.

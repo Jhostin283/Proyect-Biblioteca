@@ -11,6 +11,29 @@
       "evidence": ""
     },
     {
+      "id": "feat-006",
+      "name": "Infraestructura AWS con Terraform",
+      "description": "[RNF-02, RNF-03] infra/terraform crea la EC2 t3.micro (Ubuntu 24.04, SG con 22 solo desde la IP de dev-a y 80 público, Elastic IP, user-data.sh, outputs). dev-a ejecuta plan/apply y carga los secrets EC2_HOST, EC2_USER y EC2_SSH_KEY.",
+      "owner": "dev-a",
+      "dependencies": [],
+      "status": "not-started",
+      "openspec_change": "provision-aws-infrastructure",
+      "evidence": ""
+    },
+    {
+      "id": "feat-009",
+      "name": "CI/CD con GitHub Actions",
+      "description": "[RNF-04, RNF-06] CI obligatorio en cada Pull Request (protección de la rama main), despliegue a la EC2 al hacer merge a main y smoke test contra la IP pública. Usa la EC2 y los secrets de feat-006.",
+      "owner": "dev-b",
+      "dependencies": [
+        "feat-001",
+        "feat-006"
+      ],
+      "status": "not-started",
+      "openspec_change": "setup-continuous-deployment",
+      "evidence": ""
+    },
+    {
       "id": "feat-002",
       "name": "Contrato del dominio",
       "description": "[base de RF-01 a RF-16] Tablas users y books en una sola migración; enum Role (reader, librarian, admin); schemas compartidos; app/api/deps.py con las firmas de get_current_user y require_roles; fixture auth_as(role) en tests/conftest.py; routers vacíos de auth, users y books registrados en main.py; rutas lazy de Angular y archivos vacíos de core/auth. Ver docs/PRODUCT.md secciones 4, 6, 7 y 9.",
@@ -20,16 +43,6 @@
       ],
       "status": "not-started",
       "openspec_change": "define-domain-contract",
-      "evidence": ""
-    },
-    {
-      "id": "feat-006",
-      "name": "Infraestructura AWS con Terraform",
-      "description": "[RNF-02, RNF-03] infra/terraform crea la EC2 t3.micro (Ubuntu 24.04, SG con 22 solo desde la IP de dev-a y 80 público, Elastic IP, user-data.sh, outputs). dev-a ejecuta plan/apply y carga los secrets EC2_HOST, EC2_USER y EC2_SSH_KEY.",
-      "owner": "dev-a",
-      "dependencies": [],
-      "status": "not-started",
-      "openspec_change": "provision-aws-infrastructure",
       "evidence": ""
     },
     {
@@ -90,19 +103,6 @@
       ],
       "status": "not-started",
       "openspec_change": "add-book-search",
-      "evidence": ""
-    },
-    {
-      "id": "feat-009",
-      "name": "CI/CD con GitHub Actions",
-      "description": "[RNF-04, RNF-06] CI obligatorio en cada Pull Request (protección de la rama main), despliegue a la EC2 al hacer merge a main y smoke test contra la IP pública. Usa la EC2 y los secrets de feat-006.",
-      "owner": "dev-b",
-      "dependencies": [
-        "feat-001",
-        "feat-006"
-      ],
-      "status": "not-started",
-      "openspec_change": "setup-continuous-deployment",
       "evidence": ""
     },
     {

@@ -13,10 +13,12 @@ infraestructura como código (Terraform) y despliegue en AWS EC2.
 | Verificación | Evidencia antes de dar algo por terminado | `init.sh`, `scripts/check.sh` (incluye terraform fmt/validate), `scripts/smoke.sh`, `.github/workflows/` |
 | Alcance | Una feature a la vez por máquina, criterios de terminado | `feature_list.json` (dependencias, estado, dueño), `tasks.md` de OpenSpec |
 | Ciclo de sesión | Inicio y cierre limpios | `init.sh`, `/start`, `/handoff`, `session-handoff.md` |
-| Coordinación | Dos máquinas sin pisarse | `.harness-owner`, ramas `feat/*`, Pull Requests, `/sync`, dueños de archivos en `PRODUCT.md` |
+| Coordinación | Dos máquinas sin pisarse | `.harness-owner`, Git Flow (`develop`, `feature/*`, `release/*`), Pull Requests, `/sync`, dueños de archivos en `PRODUCT.md` |
 | Restricciones | Qué puede ejecutar o editar el agente | `opencode.json` (sin terraform apply/destroy ni push sin el usuario), `adr/` |
 
 ## Inicio rápido (cada máquina)
+Guía completa paso a paso: `docs/GETTING-STARTED.md`.
+
 ```bash
 echo dev-a > .harness-owner     # o dev-b (no se sube a git)
 ./init.sh                           # herramientas + estado + verificación base
@@ -36,6 +38,6 @@ opencode                            # luego: /start
 | `/handoff` | Rutina de fin de sesión |
 
 ## Infraestructura y despliegue
-Terraform en `infra/terraform/` crea la EC2 (lo ejecuta dev-a). GitHub Actions (de dev-b) despliega cada merge a `main`.
-Merge a `main` → CI (`scripts/check.sh --full`) → imágenes en GHCR → `docker compose pull && up -d` en la EC2 → smoke test.
+Terraform en `infra/terraform/` crea la EC2 (lo ejecuta dev-a). GitHub Actions (de dev-b) despliega cada merge a `main` (las releases de Git Flow).
+Merge de `release/*` a `main` → CI (`scripts/check.sh --full`) → imágenes en GHCR → `docker compose pull && up -d` en la EC2 → smoke test.
 Ver `docs/DEPLOYMENT.md`.

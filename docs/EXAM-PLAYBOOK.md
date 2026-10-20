@@ -4,13 +4,13 @@
 | Minuto | dev-a | dev-b |
 |---|---|---|
 | 0-10 | Revisar juntos `docs/PRODUCT.md`; crear el repo y dar acceso a dev-b | Revisar `PRODUCT.md`; clonar, `.harness-owner`, `./init.sh` |
-| 10-35 | Fase 0: feat-006 Terraform (`/opsx-ff provision-aws-infrastructure`), luego feat-002 contrato → PR | Fase 0: feat-001 esqueleto (`/opsx-ff bootstrap-project` → `/opsx-apply`) → PR; luego revisar el PR del contrato |
-| 35-95 | feat-003 login/JWT → feat-004 roles → feat-005 admin de usuarios | feat-007 CRUD de libros → feat-008 búsqueda → feat-009 GitHub Actions |
-| 95-110 | feat-010 juntos: integrar, desplegar, smoke test | feat-010 juntos |
+| 10-45 | Oleada 1: feat-006 Terraform. Oleada 2: feat-002 contrato → PR a `develop` | Oleada 1: feat-001 esqueleto. Oleada 2: feat-009 CI/CD y revisar el PR del contrato |
+| 45-95 | Oleada 3: feat-003 login/JWT → feat-004 roles → feat-005 admin de usuarios | Oleada 3: feat-007 CRUD de libros → feat-008 búsqueda |
+| 95-110 | Oleada 4 juntos: `release/1.0.0` → PR a `main` → despliegue → smoke test | Oleada 4 juntos |
 | 110-120 | `/handoff` y demo | `/handoff` y demo |
 
-Regla de oro: el contrato (feat-002) primero. Hasta que esté en `main`, dev-b solo revisa.
-Segunda regla: dev-a crea la EC2 (feat-006) apenas termine la fase 0, porque el despliegue de dev-b depende de ella.
+Regla de oro: los módulos (fase 1) empiezan solo cuando el contrato (feat-002) está en `develop`.
+Segunda regla: dev-a crea la EC2 (feat-006) en la fase 0, porque el despliegue de dev-b (feat-009) depende de ella.
 
 ## Flujo por feature (los proposal y specs ya están escritos)
 ```text

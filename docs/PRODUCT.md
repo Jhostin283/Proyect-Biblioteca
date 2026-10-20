@@ -15,7 +15,7 @@ con infraestructura en AWS creada con Terraform y desplegada automáticamente co
 | Autenticación y Autorización | **dev-a** | Registro, login con JWT, perfil, roles, protección de rutas (API y Angular), administración de usuarios |
 | Gestión de Libros | **dev-b** | CRUD de libros, búsqueda, filtro por género, paginación, detalle |
 | Infraestructura (Terraform) | **dev-a** | EC2 t3.micro, security group, Elastic IP, user-data |
-| Despliegue (GitHub Actions) | **dev-b** | CI en cada Pull Request, despliegue al hacer merge a `main`, smoke test en producción |
+| Despliegue (GitHub Actions) | **dev-b** | CI en cada Pull Request, despliegue al hacer merge a `main` (releases de Git Flow), smoke test en producción |
 
 ### 2.1. Requisitos funcionales
 | ID | Requisito | Quién lo usa | Reglas | Feature | Dueño |
@@ -43,7 +43,7 @@ con infraestructura en AWS creada con Terraform y desplegada automáticamente co
 | RNF-01 | Seguridad | Contraseñas con hash argon2; tokens JWT firmados (HS256) que vencen a los 60 min; secretos solo en variables de entorno, nunca en el repositorio | Tests de auth; revisión de `.gitignore` y `/adr-review` | feat-003 | dev-a |
 | RNF-02 | Seguridad | En el servidor solo están abiertos el puerto 80 (público) y el 22 (solo la IP del administrador); PostgreSQL nunca se expone | `terraform plan` y security group | feat-006 | dev-a |
 | RNF-03 | Infraestructura como código | Toda la infraestructura de AWS se crea y destruye con Terraform, de forma reproducible | `terraform validate` en `check.sh`; `terraform plan` sin cambios después del apply | feat-006 | dev-a |
-| RNF-04 | Integración y despliegue continuos | Cada Pull Request ejecuta los sensores; cada merge a `main` despliega automáticamente en la EC2 y ejecuta un smoke test | GitHub Actions en verde | feat-009 | dev-b |
+| RNF-04 | Integración y despliegue continuos | Cada Pull Request ejecuta los sensores; cada merge a `main` (release) despliega automáticamente en la EC2 y ejecuta un smoke test | GitHub Actions en verde | feat-009 | dev-b |
 | RNF-05 | Calidad | Cada endpoint tiene tests de éxito, 401, 403, 404 y 422 según corresponda; lint (ruff) y build de Angular sin errores | `./scripts/check.sh` termina en `CHECK OK` | todas | ambos |
 | RNF-06 | Capacidad | El sistema completo funciona en una EC2 t3.micro (1 GB de RAM): BD 320 MB, backend 256 MB, Nginx 64 MB | `docker stats` en la EC2 | feat-009 | dev-b |
 | RNF-07 | Rendimiento | El listado y la búsqueda de libros responden en menos de 1 segundo con 1 000 libros (índices en `isbn`, `title` y `author`) | Medición con `curl -w '%{time_total}'` | feat-008 | dev-b |
@@ -163,21 +163,23 @@ reescribe**: genera `design.md` y `tasks.md` con `/opsx-ff <cambio>` y luego imp
 
 ## 9. Cómo trabajan las dos máquinas
 1. **Fase 0 (≈25 min).** En paralelo: **dev-b** hace feat-001 (esqueleto) y **dev-a** hace feat-006 (Terraform, no depende de nada).
-   Luego **dev-a** maneja feat-002 (contrato) y dev-b lo revisa en el Pull Request. El contrato crea:
+   Luego **dev-a** maneja feat-002 (contrato) mientras **dev-b** hace feat-009 (CI/CD con GitHub Actions, que solo necesita
+   el esqueleto y la EC2) y revisa el Pull Request del contrato. El contrato crea:
    - **las tablas `users` y `books` en una sola migración de Alembic** y el enum `Role`;
    - los schemas de Pydantic compartidos;
    - `app/api/deps.py` con las firmas de `get_current_user` y `require_roles`, y la fixture `auth_as(role)` en `tests/conftest.py`;
    - los routers vacíos de `auth`, `users` y `books`, ya registrados en `app/main.py`;
    - las rutas lazy de Angular y los archivos vacíos de `core/auth/`, ya referenciados en `app.routes.ts` y `app.config.ts`.
 
-   Después del merge a `main`, nadie necesita volver a tocar esos archivos compartidos y no habrá dos heads de Alembic.
+   Después del merge a `develop`, nadie necesita volver a tocar esos archivos compartidos y no habrá dos heads de Alembic.
 2. **Fase 1 — en paralelo.**
    - dev-a: feat-003 → feat-004 → feat-005 (Terraform ya quedó listo en la fase 0).
-   - dev-b: feat-007 → feat-008 → feat-009 (la EC2 de feat-006 ya existe).
+   - dev-b: feat-007 → feat-008 (el CI/CD ya quedó listo en la fase 0).
 
-   Cada uno trabaja en una rama `feat/<change-name>` y abre un Pull Request; el CI debe estar en verde para integrar.
+   Cada uno trabaja en una rama `feature/<change-name>` creada desde `develop` y abre un Pull Request hacia `develop`;
+   el CI debe estar en verde para integrar.
    Antes de abrir el PR: `/sync` y `./scripts/check.sh`.
-3. **Fase 2 — juntos.** feat-010: integrar todo, desplegar desde `main`, smoke test en la EC2 y demo
+3. **Fase 2 — juntos.** feat-010: rama `release/1.0.0` desde `develop`, PR a `main` (despliega), smoke test en la EC2 y demo
    (registrarse, ver que un `reader` no puede crear libros, iniciar sesión como `admin`, cambiar el rol, crear un libro, buscarlo).
 
 ### Dueños de archivos (evita conflictos de merge)
@@ -194,7 +196,8 @@ reescribe**: genera `design.md` y `tasks.md` con `/opsx-ff <cambio>` y luego imp
   muestra dos heads, ejecuta `uv run alembic merge heads -m "merge heads"` y haz commit.
 - El estado de Terraform vive solo en la máquina de dev-a: solo dev-a ejecuta `terraform plan/apply/destroy`
   y carga los secrets `EC2_HOST`, `EC2_USER` y `EC2_SSH_KEY`.
-- El despliegue se hace solo desde `main` (lo configura dev-b en feat-009).
+- Git Flow: `feature/*` → `develop` (integración) → `release/*` → `main` (producción). El despliegue sale solo de `main`
+  (lo configura dev-b en feat-009). Guía paso a paso: `docs/GETTING-STARTED.md`.
 
 ## 10. Variables de entorno
 | Variable | Uso | Local (`.env`) | Producción (`~/app/.env` en la EC2) |

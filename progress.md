@@ -12,7 +12,7 @@ Dos máquinas trabajan en este proyecto, así que cada una lleva su propio regis
 
 ## What's Next (qué sigue)
 1. Fase 0: dev-b feat-001 (esqueleto) y dev-a feat-006 (Terraform) en paralelo; luego dev-a feat-002 (contrato).
-2. Fase 1 en paralelo: dev-a feat-003 → feat-005 (auth); dev-b feat-007 → feat-009 (libros + GitHub Actions).
+2. Oleada 2: dev-a feat-002 (contrato) y dev-b feat-009 (CI/CD). Oleada 3: dev-a feat-003 → feat-005; dev-b feat-007 → feat-008.
 3. Fase 2 juntos: feat-010 release.
 
 ## Blockers / Risks (bloqueos y riesgos)

@@ -105,7 +105,7 @@ else:
     print(f"  siguiente para {owner}: nada listo (¿esperando dependencias de la otra máquina?)")
 PY
 
-echo "  git: rama $(git branch --show-current 2>/dev/null), atrasada respecto de main en $(git rev-list --count HEAD..origin/main 2>/dev/null || echo '?') commits (ejecuta: git fetch)"
+echo "  git: rama $(git branch --show-current 2>/dev/null), atrasada respecto de develop en $(git rev-list --count HEAD..origin/develop 2>/dev/null || echo '?') commits (ejecuta: git fetch)"
 echo "  commits recientes:"
 git log --oneline -5 2>/dev/null | sed 's/^/    /' || echo "    (todavía no hay commits)"
 echo "  cambios de OpenSpec activos:"

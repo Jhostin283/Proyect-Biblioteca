@@ -10,7 +10,8 @@ Navegador ──HTTP:80──► frontend (Nginx) ──/api──► backend (F
 ```
 
 ## Pipeline (`.github/workflows/deploy.yml`, en cada push a `main`)
-Los workflows son de dev-b (feat-009). Con dos máquinas, a `main` solo se llega por Pull Request: cada merge despliega.
+Los workflows son de dev-b (feat-009). Con Git Flow, a `main` solo llegan las ramas `release/*` y `hotfix/*` por Pull Request:
+cada merge a `main` despliega. Los PR de `feature/*` hacia `develop` solo ejecutan los sensores (`ci.yml`).
 1. `check`: ejecuta `./scripts/check.sh --full` (los mismos sensores que en local, reutilizados de `ci.yml`).
 2. `build`: construye `backend` y `frontend` y los sube a `ghcr.io/<owner>/<repo>-backend|frontend` con tags `latest` y `<sha>`.
 3. `deploy`: copia `docker-compose.prod.yml` por SCP, inicia sesión en GHCR desde el servidor y ejecuta `docker compose pull && up -d`.

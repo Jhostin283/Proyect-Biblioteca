@@ -40,7 +40,7 @@ Before writing code / antes de escribir código:
 | `frontend/` | App Angular + `nginx.conf` (sirve la SPA y redirige `/api`) |
 | `infra/terraform/` | Infraestructura AWS como código (EC2 t3.micro); ver la skill `terraform-aws` |
 | `scripts/` | Sensores (`check.sh`, `smoke.sh`) y scripts de instalación |
-| `docs/` | `PRODUCT.md`, `TESTING.md`, `DEPLOYMENT.md`, `EXAM-PLAYBOOK.md` |
+| `docs/` | `PRODUCT.md`, `GETTING-STARTED.md` (Git Flow y orden de trabajo), `TESTING.md`, `DEPLOYMENT.md`, `EXAM-PLAYBOOK.md` |
 
 ## Working Rules (reglas de trabajo)
 - **One feature at a time (una feature a la vez) por máquina**: toma una sola feature sin terminar cuyo `owner` sea
@@ -52,13 +52,15 @@ Before writing code / antes de escribir código:
 
 ## Trabajo en dos máquinas
 - **Identidad**: `.harness-owner` (ignorado por git) contiene `dev-a` o `dev-b`. `./init.sh` no corre sin él.
-- **Ramas**: una por cambio, `feat/<openspec-change>`. Nunca hagas commit directo a `main`: se integra por Pull Request
-  con el CI en verde. Ejecuta `/sync` antes de empezar y antes de abrir un PR.
+- **Ramas (Git Flow)**: `main` = producción (cada merge despliega), `develop` = integración, una rama
+  `feature/<openspec-change>` por cambio (sale de `develop` y vuelve a `develop` por Pull Request con el CI en verde),
+  `release/<versión>` para entregar a `main` y `hotfix/<descripción>` solo para urgencias en producción.
+  Nunca hagas commit directo a `main` ni a `develop`. Ejecuta `/sync` antes de empezar y antes de abrir un PR.
 - **Dueños de archivos**: respeta la tabla de `docs/PRODUCT.md` sección 9. Los archivos compartidos (`app/main.py`,
   `app/models/__init__.py`, `alembic/versions/`, `tests/conftest.py`, `app.routes.ts`, `app.config.ts`, `docker-compose*.yml`,
   `.env.example`, `AGENTS.md`, `openspec/config.yaml`, `docs/PRODUCT.md`) solo cambian en features compartidas
   o en un PR que revisa el otro desarrollador.
-- **Contrato primero**: las features de A y B empiezan solo cuando `feat-002` (contrato del dominio) está en `main`.
+- **Contrato primero**: las features de A y B empiezan solo cuando `feat-002` (contrato del dominio) está en `develop`.
   Implementa contra `docs/PRODUCT.md` secciones 3 a 7; si el contrato debe cambiar, detente y avisa al usuario.
 - **Interfaz entre módulos**: las rutas de libros usan `get_current_user` y `require_roles(...)` de `app/api/deps.py`
   (las implementa dev-a). Los tests de dev-b nunca generan tokens reales: usan la fixture `auth_as(role)`.
