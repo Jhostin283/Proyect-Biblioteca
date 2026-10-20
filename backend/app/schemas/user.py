@@ -43,3 +43,15 @@ class UserRead(UserBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdate(BaseModel):
+    role: Role | None = None
+    is_active: bool | None = None
+
+
+class PaginatedUsersResponse(BaseModel):
+    items: list[UserRead]
+    total: int
+    page: int
+    size: int

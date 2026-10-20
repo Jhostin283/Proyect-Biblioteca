@@ -1,60 +1,56 @@
 # Progreso — dev-a (Autenticación y Autorización + Terraform)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-20 19:10
-**Feature activa:** ninguna (feat-004 archivada; siguiente: feat-005 add-user-administration)
-**Rama:** feature/feat-004-add-role-authorization (commit y push en curso)
+**Last Updated (última actualización):** 2026-10-20 20:10
+**Feature activa:** ninguna (feat-005 archivada; siguiente: feat-010 release cuando dev-b cierre feat-008/feat-009)
+**Rama:** feature/feat-005-add-user-administration (sin commit aún: espera confirmación del usuario)
 
 ## What's Done (hecho)
-- feat-003 (`add-user-authentication`) integrado y archivado; `get_current_user` y `require_roles` ya estaban implementados.
-- feat-004 implementado:
-  - Backend: `GET /api/users` temporal protegido con `require_roles(Role.admin)` en `app/api/routes/users.py`
-    (marcador vacío que feat-005 sustituye); `tests/test_authorization.py` con 18 tests de 401/403/200 y BR-6.
-  - Frontend: `AuthService` con `UserRole`, `isAuthenticated()` y `restoreSession()`; `SessionNoticeService`;
-    `authGuard`/`roleGuard` reales; `authInterceptor` con 401 global y `SKIP_SESSION_REDIRECT`;
-    `provideAppInitializer` en `app.config.ts`; guards en `app.routes.ts`; barra de navegación por sesión/rol,
-    banner de avisos y "Cerrar sesión" en `app.component.ts`; `/profile` delega el 401 al interceptor.
-- **Bug corregido durante 4.1**: `isAuthenticated` con `getToken() && currentUser()` quedaba cacheado en `false`
-  porque el cortocircuito no leía el signal cuando no había token. Ahora se lee `currentUser()` primero.
-  Además, `ProfileComponent` hacía `logout()` en su propio 401 y borraba el aviso del interceptor; ahora lo delega.
+- feat-003 y feat-004 integrados y archivados en `develop`.
+- feat-005 implementado:
+  - Backend: `UserRepository.list_users/update`, `UserUpdate`/`PaginatedUsersResponse`, `user_service` con
+    excepciones de dominio (404/409), `GET /api/users?q=&page=&size=` y `PATCH /api/users/{id}` solo admin.
+  - Reglas: rol inválido 422 (Pydantic), usuario inexistente 404, BR-7 con los dos mensajes exactos,
+    desactivar/reactivar con BR-6 (403 "La cuenta está desactivada").
+  - Frontend: `features/users/user.service.ts` y página `/users` con tabla, búsqueda, paginación,
+    selector de rol ("Rol actualizado") e interruptor de estado con reversión ante 409.
+- **Bug corregido durante 4.1**: el `<select>` con `[value]` mostraba "Lector" para cualquier fila recién
+  renderizada (el binding se aplicaba antes de los `@for`). Ahora cada `<option>` usa `[selected]`.
 
-## UI Evidence (comprobación en Chromium headless, 2026-10-20)
+## UI Evidence (Chromium headless, 2026-10-20)
 | Escenario | Resultado observable |
 |---|---|
-| `/books` sin sesión | redirige a `/login` |
-| Login admin | `/books`, barra con Usuarios y Cerrar sesión, token guardado |
-| Recarga con sesión | sigue en `/books` con sesión restaurada |
-| Reader en `/users` | redirige a `/books` con "No tienes permiso para esta acción" |
-| Reader en `/books/new` | redirige a `/books` con "No tienes permiso para esta acción" |
-| Recarga reader | sigue autenticado; barra sin "Usuarios" |
-| Cerrar sesión | `/login` y token eliminado |
-| Botón "atrás" tras logout (`/books`) | redirige a `/login` |
-| Token alterado durante el uso (`/profile`) | `/login` con "Tu sesión expiró" y token eliminado |
-| API en vivo | admin `GET /api/users` 200; reader 403; `GET /api/books` sin token 401 |
+| Admin abre `/users` | lista paginada (10 usuarios, "Página 1 de 1") |
+| Buscar "luis" | filtra las filas que contienen Luis |
+| Cambiar rol reader → librarian | aviso "Rol actualizado" y el selector queda en Bibliotecario |
+| Desactivar usuario | aviso "Usuario desactivado" e interruptor apagado |
+| Reactivar usuario | aviso "Usuario activado" e interruptor encendido |
+| Admin intenta desactivarse | 409 "No puedes desactivar tu propia cuenta"; el interruptor vuelve a activo |
+| Limpiar búsqueda | vuelve al listado completo |
+| Selector en fila admin | muestra "Administrador" correctamente tras el fix |
 
 ## Evidence of Completion (evidencia)
-- [x] `cd backend && uv run pytest -q` → **77 passed**
+- [x] `cd backend && uv run pytest -q` → **88 passed**
 - [x] `cd backend && uv run ruff check . && uv run ruff format --check .` → limpio
 - [x] `cd frontend && npx ng build` → OK
 - [x] `./scripts/check.sh` → **CHECK OK**
-- [x] `./scripts/check.sh --full` → **CHECK OK** + **SMOKE OK** (health, SPA, fallback Angular)
-- [x] `openspec validate add-role-authorization` → válido
-
-## What's Next (qué sigue)
-1. Confirmar el commit y abrir el PR `feature/feat-004-add-role-authorization` → `develop`
-   (pedir a dev-b revisión de `app.routes.ts` y `app.config.ts`, archivos compartidos).
-2. Siguiente feature de dev-a: feat-005 add-user-administration (sustituye el marcador de `GET /api/users`).
+- [x] `./scripts/check.sh --full` → **CHECK OK** + **SMOKE OK** (primer intento con timeout de ghcr.io; el reintento pasó)
+- [x] `openspec validate add-user-administration` → válido
 
 ## Archived (archivado)
-- `add-role-authorization` movido a `openspec/changes/archive/2026-10-20-add-role-authorization`.
-- Spec principal creada y validada: `openspec/specs/authorization/spec.md` (5 requisitos, 12 escenarios).
-- feat-004 marcada como `done` en `feature_list.json`.
+- `add-user-administration` movido a `openspec/changes/archive/2026-10-20-add-user-administration`.
+- Spec principal creada y validada: `openspec/specs/user-administration/spec.md` (5 requisitos, 11 escenarios).
+- feat-005 marcada como `done` en `feature_list.json`.
+
+## What's Next (qué sigue)
+1. Confirmar el commit y subir `feature/feat-005-add-user-administration`; merge a `develop`.
+2. Siguiente: feat-010 (release) cuando dev-b cierre feat-008/feat-009.
 
 ## Blockers / Risks (bloqueos y riesgos)
-- `docker compose --build` depende de `ghcr.io/astral-sh/uv:latest`: el primer intento de `--full` falló por timeout
-  de red; el reintento pasó. Si vuelve a fallar, reintentar antes de tocar el Dockerfile (archivo de contrato).
-- `GET /api/users` devuelve un marcador vacío hasta feat-005; no confundir con el listado real.
+- `docker compose --build` depende de `ghcr.io/astral-sh/uv:latest`; el primer intento de `--full` puede fallar
+  por timeout de red. Reintentar antes de tocar el Dockerfile (archivo de contrato).
+- Un admin puede desactivar a otro admin y dejar el sistema sin admins: la spec solo protege la cuenta propia.
 
 ## Notes for Next Session (notas para la próxima sesión)
 - No hacer commit sin confirmación del usuario (regla git-discipline).
-- `app.routes.ts` y `app.config.ts` son compartidos: el PR los marca para revisión de dev-b.
+- No quedan archivos compartidos tocados por feat-005; `app.routes.ts` ya traía el guard admin.

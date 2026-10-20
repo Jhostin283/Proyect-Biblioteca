@@ -77,9 +77,9 @@
       "dependencies": [
         "feat-004"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-user-administration",
-      "evidence": ""
+      "evidence": "Tareas 1.1-4.3 completadas (13/13): uv run pytest -q -> 88 passed (11 en test_users.py); ruff check/format limpio; npx ng build OK; ./scripts/check.sh -> CHECK OK; ./scripts/check.sh --full -> CHECK OK + SMOKE OK (reintento tras timeout de ghcr). UI en Chromium: listado paginado, búsqueda por nombre/email, rol reader->librarian con 'Rol actualizado', desactivar/reactivar, auto-desactivación 409 con interruptor revertido. Bug corregido: <select> con [value] mostraba Lector en filas nuevas; ahora usa [selected]. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-user-administration; spec user-administration sincronizada."
     },
     {
       "id": "feat-007",
