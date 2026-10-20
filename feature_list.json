@@ -53,14 +53,14 @@
       "dependencies": [
         "feat-002"
       ],
-      "status": "not-started",
-      "openspec_change": "add-user-authentication",
-      "evidence": ""
+      "status": "in-progress",
+    "openspec_change": "add-user-authentication",
+    "evidence": "Tareas 1.1-6.3 completadas (tasks.md 20/20): uv run pytest -q -> 33 passed (test_auth 16, test_auth_service 8, test_security 7, test_health 2); ./scripts/check.sh --full -> CHECK OK con SMOKE OK (health, SPA, fallback); npx ng build -> OK; en vivo en http://localhost:8080: login admin@library.local -> 200, GET /api/auth/me -> 200 con role admin, register dominio .local -> 201, email malformado -> 422. D10: EmailField acepta special-use (.local) del contrato; ruff check/format limpio."
     },
     {
       "id": "feat-004",
       "name": "Autorización por roles",
-      "description": "[RF-05, RF-06] Implementación real de get_current_user y require_roles (401/403); en Angular: AuthService, authInterceptor, authGuard, roleGuard y cierre de sesión en la barra de navegación.",
+      "description": "[RF-05, RF-06] Autorización por roles en la API (401/403 en rutas protegidas) y en Angular: authGuard, roleGuard, sesión persistente al recargar y cierre de sesión en la barra de navegación.",
       "owner": "dev-a",
       "dependencies": [
         "feat-003"
