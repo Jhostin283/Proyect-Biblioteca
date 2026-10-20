@@ -65,7 +65,7 @@ En opencode, ejecuta `/connect` una vez para configurar el modelo.
 |---|---|---|---|
 | `main` | Producción: **cada merge despliega en la EC2** | — | — |
 | `develop` | Integración del trabajo de los dos | `main` | — |
-| `feature/<cambio>` | Un cambio de OpenSpec | `develop` | `develop` (Pull Request) |
+| `feature/<feat-id>-<change-name>` | Un cambio de OpenSpec | `develop` | `develop` (Pull Request) |
 | `release/1.0.0` | Entrega final | `develop` | `main` y `develop` |
 | `hotfix/<descripción>` | Arreglo urgente en producción | `main` | `main` y `develop` |
 
@@ -98,7 +98,7 @@ las tareas y el código.
 ```bash
 # 5.1 Rama desde develop actualizado
 git switch develop && git pull
-git switch -c feature/<cambio>
+git switch -c feature/<feat-id>-<change-name>
 ```
 
 ```text
