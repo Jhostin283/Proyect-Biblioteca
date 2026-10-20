@@ -89,9 +89,9 @@
       "dependencies": [
         "feat-002"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-book-management",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (18 backend tests passed en pytest, Angular build OK, ISBN único 409, validación año 422, created_by por token, roles librarian/admin)"
     },
     {
       "id": "feat-008",
