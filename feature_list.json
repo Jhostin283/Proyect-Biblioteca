@@ -6,9 +6,9 @@
       "description": "[RNF-08] Esqueletos de FastAPI y Angular siguiendo el contrato de AGENTS.md, con GET /api/health visible en la página de inicio y una barra de navegación. Ejecutar /scaffold.",
       "owner": "dev-b",
       "dependencies": [],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "bootstrap-project",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (pytest 2 passed, ruff OK, ng build OK)"
     },
     {
       "id": "feat-006",
