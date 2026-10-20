@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-
 import { AuthService, UserProfile } from '../../../core/auth/auth.service';
 
 const ROLE_LABELS: Record<UserProfile['role'], string> = {
@@ -103,7 +101,6 @@ const ROLE_LABELS: Record<UserProfile['role'], string> = {
 })
 export class ProfileComponent implements OnInit {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   profile = signal<UserProfile | null>(null);
   error = signal<string | null>(null);
@@ -118,9 +115,6 @@ export class ProfileComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         if (err.status === 401) {
-          // Sin sesión válida: cerrar y volver al inicio de sesión
-          this.auth.logout();
-          this.router.navigate(['/login']);
           return;
         }
         this.error.set(this.errorDetail(err));

@@ -1,12 +1,18 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
-import { Observable, switchMap, tap } from 'rxjs';
+import { HttpClient, HttpContext, HttpContextToken } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, firstValueFrom, switchMap, tap } from 'rxjs';
+
+import { SessionNoticeService } from './auth-notice.service';
+
+export type UserRole = 'reader' | 'librarian' | 'admin';
+
+export const SKIP_SESSION_REDIRECT = new HttpContextToken<boolean>(() => false);
 
 export interface UserProfile {
   id: number;
   email: string;
   full_name: string;
-  role: 'reader' | 'librarian' | 'admin';
+  role: UserRole;
   is_active: boolean;
 }
 
@@ -22,6 +28,8 @@ interface LoginResponse {
 export class AuthService {
   currentUser = signal<UserProfile | null>(null);
 
+  private readonly notice = inject(SessionNoticeService);
+
   constructor(private readonly http: HttpClient) {}
 
   getToken(): string | null {
@@ -32,13 +40,36 @@ export class AuthService {
     localStorage.setItem('token', token);
   }
 
+  isAuthenticated(): boolean {
+    return this.currentUser() !== null && this.getToken() !== null;
+  }
+
+  hasRole(role: UserRole): boolean {
+    return this.currentUser()?.role === role;
+  }
+
+  hasAnyRole(roles: UserRole[]): boolean {
+    const role = this.currentUser()?.role;
+    return role !== undefined && roles.includes(role);
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     this.currentUser.set(null);
+    this.notice.clear();
   }
 
-  hasRole(role: string): boolean {
-    return this.currentUser()?.role === role;
+  async restoreSession(): Promise<void> {
+    if (!this.getToken()) {
+      this.currentUser.set(null);
+      return;
+    }
+
+    try {
+      await firstValueFrom(this.fetchProfile(true));
+    } catch {
+      this.logout();
+    }
   }
 
   login(email: string, password: string): Observable<UserProfile> {
@@ -59,8 +90,17 @@ export class AuthService {
   }
 
   me(): Observable<UserProfile> {
-    return this.http.get<UserProfile>('/api/auth/me').pipe(
-      tap((profile) => this.currentUser.set(profile)),
-    );
+    return this.fetchProfile();
+  }
+
+  private fetchProfile(skipSessionRedirect = false): Observable<UserProfile> {
+    const context = new HttpContext();
+    if (skipSessionRedirect) {
+      context.set(SKIP_SESSION_REDIRECT, true);
+    }
+
+    return this.http
+      .get<UserProfile>('/api/auth/me', { context })
+      .pipe(tap((profile) => this.currentUser.set(profile)));
   }
 }

@@ -1,17 +1,20 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from './auth.service';
 
-export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
+import { SessionNoticeService } from './auth-notice.service';
+import { AuthService, UserRole } from './auth.service';
+
+export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
   return () => {
     const authService = inject(AuthService);
+    const notice = inject(SessionNoticeService);
     const router = inject(Router);
-    const user = authService.currentUser();
 
-    if (user && allowedRoles.includes(user.role)) {
+    if (authService.hasAnyRole(allowedRoles)) {
       return true;
     }
 
-    return router.parseUrl('/');
+    notice.show('No tienes permiso para esta acción');
+    return router.parseUrl('/books');
   };
 };
