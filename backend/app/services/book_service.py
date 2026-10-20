@@ -53,5 +53,24 @@ class BookService:
         book = self.get_book_by_id(db, book_id)
         book_repo.delete(db, book)
 
+    def search_books(
+        self,
+        db: Session,
+        q: str | None = None,
+        genre: str | None = None,
+        page: int = 1,
+        size: int = 10,
+    ) -> dict:
+        items, total = book_repo.list_books(db, q=q, genre=genre, page=page, size=size)
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "size": size,
+        }
+
+    def get_genres(self, db: Session) -> list[str]:
+        return book_repo.get_genres(db)
+
 
 book_service = BookService()

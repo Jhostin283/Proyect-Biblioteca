@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.book import Book
@@ -29,6 +29,37 @@ class BookRepository:
     def delete(self, db: Session, book: Book) -> None:
         db.delete(book)
         db.commit()
+
+    def list_books(
+        self,
+        db: Session,
+        q: str | None = None,
+        genre: str | None = None,
+        page: int = 1,
+        size: int = 10,
+    ) -> tuple[list[Book], int]:
+        stmt = select(Book)
+        count_stmt = select(func.count(Book.id))
+
+        if q:
+            term = f"%{q.strip()}%"
+            filter_q = or_(Book.title.ilike(term), Book.author.ilike(term))
+            stmt = stmt.where(filter_q)
+            count_stmt = count_stmt.where(filter_q)
+
+        if genre:
+            stmt = stmt.where(Book.genre == genre)
+            count_stmt = count_stmt.where(Book.genre == genre)
+
+        total = db.scalar(count_stmt) or 0
+
+        stmt = stmt.order_by(Book.title.asc()).offset((page - 1) * size).limit(size)
+        items = list(db.scalars(stmt).all())
+        return items, total
+
+    def get_genres(self, db: Session) -> list[str]:
+        stmt = select(Book.genre).distinct().order_by(Book.genre.asc())
+        return list(db.scalars(stmt).all())
 
 
 book_repo = BookRepository()

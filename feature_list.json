@@ -101,9 +101,9 @@
       "dependencies": [
         "feat-007"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-book-search",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (28 backend tests en pytest, Angular build OK, paginación {items, total, page, size}, búsqueda ilike título/autor, filtro género, géneros alfabéticos)"
     },
     {
       "id": "feat-010",

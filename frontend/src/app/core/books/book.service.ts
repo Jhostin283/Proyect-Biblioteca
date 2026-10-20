@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Book {
@@ -24,12 +24,40 @@ export interface BookCreateInput {
   description?: string | null;
 }
 
+export interface PaginatedBooks {
+  items: Book[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class BookService {
   private http = inject(HttpClient);
   private baseUrl = '/api/books';
+
+  getBooks(params?: { q?: string; genre?: string; page?: number; size?: number }): Observable<PaginatedBooks> {
+    let httpParams = new HttpParams();
+    if (params?.q) {
+      httpParams = httpParams.set('q', params.q);
+    }
+    if (params?.genre) {
+      httpParams = httpParams.set('genre', params.genre);
+    }
+    if (params?.page) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params?.size) {
+      httpParams = httpParams.set('size', params.size.toString());
+    }
+    return this.http.get<PaginatedBooks>(this.baseUrl, { params: httpParams });
+  }
+
+  getGenres(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/genres`);
+  }
 
   getBook(id: number): Observable<Book> {
     return this.http.get<Book>(`${this.baseUrl}/${id}`);
@@ -47,3 +75,4 @@ export class BookService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }
+
