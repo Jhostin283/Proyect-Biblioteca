@@ -1,13 +1,8 @@
 name: CI
 
+# Triggers automáticos deshabilitados temporalmente hasta finalizar el proyecto.
+# Solo queda el lanzamiento manual (workflow_dispatch) y workflow_call.
 on:
-  pull_request:
-    branches:
-      - main
-      - develop
-  push:
-    branches:
-      - develop
   workflow_call:
   workflow_dispatch:
 
