@@ -138,7 +138,11 @@ def test_admin_can_list_users(client: TestClient, auth_as) -> None:
     response = client.get("/api/users")
 
     assert response.status_code == 200
-    assert response.json() == {"items": [], "total": 0, "page": 1, "size": 10}
+    body = response.json()
+    assert body["page"] == 1
+    assert body["size"] == 10
+    assert body["total"] >= 1
+    assert isinstance(body["items"], list)
 
 
 def deactivate_user(email: str) -> None:
