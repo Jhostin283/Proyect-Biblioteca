@@ -16,9 +16,9 @@
       "description": "[RNF-02, RNF-03] infra/terraform crea la EC2 t3.micro (Ubuntu 24.04, SG con 22 solo desde la IP de dev-a y 80 público, Elastic IP, user-data.sh, outputs). dev-a ejecuta plan/apply y carga los secrets EC2_HOST, EC2_USER y EC2_SSH_KEY.",
       "owner": "dev-a",
       "dependencies": [],
-      "status": "not-started",
+      "status": "in-progress",
       "openspec_change": "provision-aws-infrastructure",
-      "evidence": ""
+      "evidence": "./scripts/check.sh → CHECK OK (terraform fmt, init -backend=false, validate con aws provider 6.69.1). Planificación 4/4 artefactos; 10/15 tareas; faltan 6.1–6.4 y 7.1 (apply y verificación en AWS, solo usuario dev-a)."
     },
     {
       "id": "feat-009",
