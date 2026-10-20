@@ -24,13 +24,12 @@ Los carga dev-a, que es quien crea la EC2.
 
 | Secret | Valor |
 |---|---|
-| `EC2_HOST` | IP pública de la instancia (`terraform output -raw public_ip`) |
-| `EC2_USER` | `ubuntu` |
+| `EC2_IP` o `EC2_HOST` | IP pública de la instancia (`terraform output -raw public_ip`) |
+| `EC2_USER` (opcional) | `ubuntu` (por defecto si no se define) |
 | `EC2_SSH_KEY` | Contenido completo de la llave `.pem` |
 
 ```bash
-gh secret set EC2_HOST --body "$(terraform -chdir=infra/terraform output -raw public_ip)"
-gh secret set EC2_USER --body "ubuntu"
+gh secret set EC2_IP --body "$(terraform -chdir=infra/terraform output -raw public_ip)"
 gh secret set EC2_SSH_KEY < ~/keys/<llave>.pem
 ```
 
