@@ -29,9 +29,9 @@
         "feat-001",
         "feat-006"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "setup-continuous-deployment",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (workflows ci.yml y deploy.yml configurados y activos, badges en README.md)"
     },
     {
       "id": "feat-002",
