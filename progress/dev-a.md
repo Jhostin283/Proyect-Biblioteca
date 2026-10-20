@@ -1,52 +1,60 @@
 # Progreso — dev-a (Autenticación y Autorización + Terraform)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-20 22:20
-**Feature activa:** feat-003 add-user-authentication — IMPLEMENTACIÓN COMPLETA (tasks.md 21/21)
-**Rama:** feature/feat-003-add-user-authentication (sin commit aún: espera confirmación del usuario)
+**Last Updated (última actualización):** 2026-10-20 19:10
+**Feature activa:** ninguna (feat-004 archivada; siguiente: feat-005 add-user-administration)
+**Rama:** feature/feat-004-add-role-authorization (commit y push en curso)
 
 ## What's Done (hecho)
-- feat-006 (Terraform) y feat-002 (contrato) ya estaban en `develop` al iniciar.
-- feat-003: artefactos OpenSpec completos (proposal, specs 6/15, design D1-D10, tasks) y las 6 tareas implementadas:
-  - Backend: `core/security.py`, `repositories/user_repository.py`, `schemas/auth.py`, `services/auth_service.py`,
-    `api/routes/auth.py`, `deps.py:get_current_user` real, admin inicial en `lifespan` de `app/main.py`.
-  - Frontend: `core/auth/auth.service.ts` (login/register/me + signals), componentes `/login`, `/register`, `/profile`.
-  - Tests: 33 verdes (16 auth + 8 servicio + 7 seguridad + 2 health).
-- **D10 (bug encontrado en 6.2)**: `EmailStr` rechazaba `admin@library.local` (dominio special-use) → 422 en login
-  del admin y 500 en `/me`. Solución: `EmailField` en `app/schemas/user.py` (email-validator + fallback `.local`,
-  aún rechaza malformados); tests de regresión BR-8 añadidos.
+- feat-003 (`add-user-authentication`) integrado y archivado; `get_current_user` y `require_roles` ya estaban implementados.
+- feat-004 implementado:
+  - Backend: `GET /api/users` temporal protegido con `require_roles(Role.admin)` en `app/api/routes/users.py`
+    (marcador vacío que feat-005 sustituye); `tests/test_authorization.py` con 18 tests de 401/403/200 y BR-6.
+  - Frontend: `AuthService` con `UserRole`, `isAuthenticated()` y `restoreSession()`; `SessionNoticeService`;
+    `authGuard`/`roleGuard` reales; `authInterceptor` con 401 global y `SKIP_SESSION_REDIRECT`;
+    `provideAppInitializer` en `app.config.ts`; guards en `app.routes.ts`; barra de navegación por sesión/rol,
+    banner de avisos y "Cerrar sesión" en `app.component.ts`; `/profile` delega el 401 al interceptor.
+- **Bug corregido durante 4.1**: `isAuthenticated` con `getToken() && currentUser()` quedaba cacheado en `false`
+  porque el cortocircuito no leía el signal cuando no había token. Ahora se lee `currentUser()` primero.
+  Además, `ProfileComponent` hacía `logout()` en su propio 401 y borraba el aviso del interceptor; ahora lo delega.
 
-## What's In Progress (en curso)
-- [ ] Commit propuesto (pendiente confirmación) y PR `feature/feat-003-add-user-authentication` → `develop`.
-
-## What's Next (qué sigue)
-1. Confirmar el commit del feat-003 y abrir el PR (CI verde; dev-b revisa `app/main.py` y `app/schemas/user.py`).
-2. `/sync`, `/opsx-verify add-user-authentication` y `/opsx-archive add-user-authentication`; feat-003 → `done`.
-3. feat-004 add-role-authorization (guards, `require_roles` en UI, interceptor ya listo).
-
-## Blockers / Risks (bloqueos y riesgos)
-- En esta máquina los puertos 5432 y 8080 los ocupan otros proyectos; para `check.sh --full` se detuvieron
-  `app_postgres` y `glpi-app` (con permiso del usuario). Preguntar si se reinician al terminar.
-- `app/schemas/user.py` (archivo de feat-002) se tocó en feat-003 por D10: dev-b debe revisarlo en el PR.
-
-## Files Modified This Session (archivos modificados)
-- `backend/app/schemas/auth.py`, `backend/app/schemas/user.py` (D10), `backend/app/core/security.py`,
-  `backend/app/repositories/user_repository.py`, `backend/app/services/auth_service.py`,
-  `backend/app/api/routes/auth.py`, `backend/app/api/deps.py`, `backend/app/main.py`,
-  `backend/tests/test_security.py`, `test_auth_service.py`, `test_auth.py`
-- `frontend/src/app/core/auth/auth.service.ts`,
-  `frontend/src/app/features/auth/{login,register,profile}/*.ts`
-- `openspec/changes/add-user-authentication/{design.md,tasks.md}`, `feature_list.json`
+## UI Evidence (comprobación en Chromium headless, 2026-10-20)
+| Escenario | Resultado observable |
+|---|---|
+| `/books` sin sesión | redirige a `/login` |
+| Login admin | `/books`, barra con Usuarios y Cerrar sesión, token guardado |
+| Recarga con sesión | sigue en `/books` con sesión restaurada |
+| Reader en `/users` | redirige a `/books` con "No tienes permiso para esta acción" |
+| Reader en `/books/new` | redirige a `/books` con "No tienes permiso para esta acción" |
+| Recarga reader | sigue autenticado; barra sin "Usuarios" |
+| Cerrar sesión | `/login` y token eliminado |
+| Botón "atrás" tras logout (`/books`) | redirige a `/login` |
+| Token alterado durante el uso (`/profile`) | `/login` con "Tu sesión expiró" y token eliminado |
+| API en vivo | admin `GET /api/users` 200; reader 403; `GET /api/books` sin token 401 |
 
 ## Evidence of Completion (evidencia)
-- [x] `uv run pytest -q` → 33 passed
-- [x] `uv run ruff check . && uv run ruff format --check .` → limpio
-- [x] `npx ng build` → OK
-- [x] `./scripts/check.sh --full` → CHECK OK + SMOKE OK (health, SPA, fallback Angular)
-- [x] En vivo (localhost:8080): login `admin@library.local` → 200; `/me` → 200 `role=admin`;
-      register `.local` → 201; email malformado → 422
-- [x] `npx openspec validate add-user-authentication` → válido
+- [x] `cd backend && uv run pytest -q` → **77 passed**
+- [x] `cd backend && uv run ruff check . && uv run ruff format --check .` → limpio
+- [x] `cd frontend && npx ng build` → OK
+- [x] `./scripts/check.sh` → **CHECK OK**
+- [x] `./scripts/check.sh --full` → **CHECK OK** + **SMOKE OK** (health, SPA, fallback Angular)
+- [x] `openspec validate add-role-authorization` → válido
+
+## What's Next (qué sigue)
+1. Confirmar el commit y abrir el PR `feature/feat-004-add-role-authorization` → `develop`
+   (pedir a dev-b revisión de `app.routes.ts` y `app.config.ts`, archivos compartidos).
+2. Siguiente feature de dev-a: feat-005 add-user-administration (sustituye el marcador de `GET /api/users`).
+
+## Archived (archivado)
+- `add-role-authorization` movido a `openspec/changes/archive/2026-10-20-add-role-authorization`.
+- Spec principal creada y validada: `openspec/specs/authorization/spec.md` (5 requisitos, 12 escenarios).
+- feat-004 marcada como `done` en `feature_list.json`.
+
+## Blockers / Risks (bloqueos y riesgos)
+- `docker compose --build` depende de `ghcr.io/astral-sh/uv:latest`: el primer intento de `--full` falló por timeout
+  de red; el reintento pasó. Si vuelve a fallar, reintentar antes de tocar el Dockerfile (archivo de contrato).
+- `GET /api/users` devuelve un marcador vacío hasta feat-005; no confundir con el listado real.
 
 ## Notes for Next Session (notas para la próxima sesión)
 - No hacer commit sin confirmación del usuario (regla git-discipline).
-- Tras archivar feat-003: feat-004 no toca `app.routes.ts` hasta que feat-002's rutas lazy ya existen (sí existen).
+- `app.routes.ts` y `app.config.ts` son compartidos: el PR los marca para revisión de dev-b.

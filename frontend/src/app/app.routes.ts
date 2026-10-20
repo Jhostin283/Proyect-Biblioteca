@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
 import { HomeComponent } from './features/home/home.component';
 
 export const routes: Routes = [
@@ -15,31 +17,37 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/auth/profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
     path: 'users',
+    canActivate: [authGuard, roleGuard(['admin'])],
     loadComponent: () =>
       import('./features/users/user-list/user-list.component').then((m) => m.UserListComponent),
   },
   {
     path: 'books',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/books/book-list/book-list.component').then((m) => m.BookListComponent),
   },
   {
     path: 'books/new',
+    canActivate: [authGuard, roleGuard(['librarian', 'admin'])],
     loadComponent: () =>
       import('./features/books/book-form/book-form.component').then((m) => m.BookFormComponent),
   },
   {
     path: 'books/:id',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/books/book-detail/book-detail.component').then((m) => m.BookDetailComponent),
   },
   {
     path: 'books/:id/edit',
+    canActivate: [authGuard, roleGuard(['librarian', 'admin'])],
     loadComponent: () =>
       import('./features/books/book-form/book-form.component').then((m) => m.BookFormComponent),
   },
