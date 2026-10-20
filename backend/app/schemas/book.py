@@ -68,3 +68,10 @@ class BookRead(BookBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedBooksResponse(BaseModel):
+    items: list[BookRead]
+    total: int
+    page: int
+    size: int
