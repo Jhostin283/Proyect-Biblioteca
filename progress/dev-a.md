@@ -1,7 +1,7 @@
 # Progreso — dev-a (Autenticación y Autorización + Terraform)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-20 20:40
+**Last Updated (última actualización):** 2026-10-20 20:42
 **Feature activa:** feat-006 `provision-aws-infrastructure` (última que queda de dev-a)
 **Rama:** feature/feat-006-provision-aws-infrastructure (integrado `origin/develop` con feat-001…005, 007, 008 y 009)
 
@@ -36,8 +36,12 @@
 | Selector en fila admin | muestra "Administrador" correctamente tras el fix |
 
 ## What's In Progress (en curso)
-- [ ] feat-006: tareas 6.1, 6.3, 6.4 y 7.1 pendientes de cerrar con evidencia
-  (`terraform.tfvars` restaurado, plan/apply de reconciliación, secret `EC2_USER`, verificación de escenarios).
+- [ ] feat-006: tareas 6.1, 6.3, 6.4 y 7.1 pendientes de cerrar con evidencia.
+  - [x] `develop` integrado en la rama (merge 33f7939; conflicto resuelto solo en este archivo).
+  - [x] `terraform.tfvars` restaurado con los valores reales (`key_name = "app-1-key"`, `admin_cidr = "38.226.159.83/32"`).
+  - [x] `tfplan` regenerado: **0 to add, 1 to change, 0 to destroy** (solo la regla 22 del SG; la instancia no se toca).
+  - [ ] `terraform apply tfplan` → pendiente de confirmación del usuario.
+  - [ ] `EC2_USER`, verificación por SSH y escenarios del spec.
 
 ## Evidence of Completion (evidencia)
 - [x] `cd backend && uv run pytest -q` → **88 passed**
@@ -48,7 +52,9 @@
 - [x] `openspec validate add-user-administration` → válido
 - [x] `./scripts/check.sh` (feat-006, rama antes del sync) → **CHECK OK** (terraform fmt, init -backend=false, validate)
 - [x] `aws ec2 describe-instances i-01a0b287f6e44d807` → `running 184.197.133.138 app-1-key`
-- [x] `terraform output` → `public_ip = 184.197.133.138`
+- [x] `terraform output` → `public_ip = 184.197.133.138`, `ssh_command = ssh -i ~/.ssh/app-1-key.pem ubuntu@184.197.133.138`
+- [x] `terraform fmt -check -recursive && terraform init && terraform validate` → OK
+- [x] `terraform plan -out tfplan` → **0 to add, 1 to change, 0 to destroy** (SG: 22 pasa de 190.43.149.172/32 a 38.226.159.83/32)
 
 ## Archived (archivado)
 - `add-user-administration` movido a `openspec/changes/archive/2026-10-20-add-user-administration`.
