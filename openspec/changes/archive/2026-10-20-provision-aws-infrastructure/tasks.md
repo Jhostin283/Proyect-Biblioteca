@@ -26,12 +26,17 @@
 
 ## 6. Despliegue real (lo ejecuta el usuario de dev-a, no el agente)
 
-- [ ] 6.1 Copiar `terraform.tfvars.example` a `terraform.tfvars` y completar `key_name` (par existente en la región) y `admin_cidr` (`<tu-ip-publica>/32`) — verify: `terraform -chdir=infra/terraform plan` no falla por variables faltantes
+- [x] 6.1 Copiar `terraform.tfvars.example` a `terraform.tfvars` y completar `key_name` (par existente en la región) y `admin_cidr` (`<tu-ip-publica>/32`) — verify: `terraform -chdir=infra/terraform plan` no falla por variables faltantes (hecho con `key_name = "app-1-key"` y `admin_cidr = "38.226.159.83/32"`)
 - [x] 6.2 Ejecutar `terraform -chdir=infra/terraform init` (con credenciales) y `terraform plan -out tfplan`; revisar que propone exactamente 1 instance, 1 security group y 1 eip, sin destrucciones — verify: el resumen del plan dice `3 to add, 0 to change, 0 to destroy`
-- [ ] 6.3 Ejecutar `terraform -chdir=infra/terraform apply tfplan` y esperar 2–3 minutos de user-data — verify: `terraform output -raw public_ip` devuelve una IPv4 y `ssh -i <pem> ubuntu@<ip> 'cat /var/log/user-data.done'` existe con `docker compose version` operativo
-- [ ] 6.4 Cargar los secrets del repositorio: `EC2_HOST` (output `public_ip`), `EC2_USER` (`ubuntu`) y `EC2_SSH_KEY` (contenido del `.pem`) — verify: `gh secret list` muestra los tres secrets con fecha de actualización de hoy
+- [x] 6.3 Ejecutar `terraform -chdir=infra/terraform apply tfplan` y esperar 2–3 minutos de user-data — verify: `terraform output -raw public_ip` devuelve una IPv4 y `ssh -i <pem> ubuntu@<ip> 'cat /var/log/user-data.done'` existe con `docker compose version` operativo (apply del 2026-10-20: 0 added, 1 changed, 0 destroyed; SSH verificado con `user-data.done` = 2026-10-20T21:22:05+00:00 y Docker Compose 2.40.3)
+- [x] 6.4 Cargar los secrets del repositorio: `EC2_HOST` (output `public_ip`), `EC2_USER` (`ubuntu`) y `EC2_SSH_KEY` (contenido del `.pem`) — verify: `gh secret list` muestra los tres secrets con fecha de actualización de hoy (cargados el 2026-10-21; `EC2_IP` queda además como respaldo que el workflow acepta)
 
 ## 7. Verificación de integración
 
-- [ ] 7.1 Verificar los escenarios observables del spec: `terraform plan` posterior informa «No changes»; desde otra IP el SSH no conecta; `<public_ip>:5432` no acepta conexiones; `http://<public_ip>` responde (aún sin app, conexión aceptada en el puerto 80) — verify: cada comprobación registrada en `progress/dev-a.md` con el resultado
+- [x] 7.1 Verificar los escenarios observables del spec: `terraform plan` posterior informa «No changes»; desde otra IP el SSH no conecta; `<public_ip>:5432` no acepta conexiones; `http://<public_ip>` responde (aún sin app, conexión aceptada en el puerto 80) — verify: cada comprobación registrada en `progress/dev-a.md` con el resultado (2026-10-20: plan «No changes»; SG solo con 22 desde `38.226.159.83/32` y sin regla 5432; desde la EIP de la propia instancia —otra IP— el 22 no conecta; 5432 rechaza; el 80 acepta el paquete por el SG y el servicio aún no está desplegado: el escenario «Acceso web» se valida con el despliegue de feat-010)
 - [x] 7.2 Ejecutar `./scripts/check.sh` y registrar el resultado en `feature_list.json` (`evidence` de feat-006); si `develop` ya tiene feat-001, ejecutar también `./scripts/check.sh --full` — verify: la entrada de feat-006 en `feature_list.json` contiene el comando y su salida resumida (`CHECK OK`)
+
+## Workflow follow-up
+
+- Abrir el PR `feature/feat-006-provision-aws-infrastructure` → `develop`.
+- Ejecutar `/opsx-verify provision-aws-infrastructure`; si no hay problemas CRITICAL, `/opsx-archive provision-aws-infrastructure` y actualizar `progress/dev-a.md`.

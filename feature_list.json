@@ -16,9 +16,9 @@
       "description": "[RNF-02, RNF-03] infra/terraform crea la EC2 t3.micro (Ubuntu 24.04, SG con 22 solo desde la IP de dev-a y 80 público, Elastic IP, user-data.sh, outputs). dev-a ejecuta plan/apply y carga los secrets EC2_HOST, EC2_USER y EC2_SSH_KEY.",
       "owner": "dev-a",
       "dependencies": [],
-      "status": "in-progress",
+      "status": "done",
       "openspec_change": "provision-aws-infrastructure",
-      "evidence": "./scripts/check.sh → CHECK OK (terraform fmt, init -backend=false, validate con aws provider 6.69.1). Planificación 4/4 artefactos; 10/15 tareas; faltan 6.1–6.4 y 7.1 (apply y verificación en AWS, solo usuario dev-a)."
+      "evidence": "Tareas 15/15 (tasks.md); cambio archivado en openspec/changes/archive/2026-10-20-provision-aws-infrastructure y spec principal en openspec/specs/infrastructure/spec.md. terraform apply → 0 added, 1 changed, 0 destroyed (SG con 22 solo desde 38.226.159.83/32); terraform plan -detailed-exitcode → «No changes»; SSH → user-data.done + Docker Compose 2.40.3; secrets EC2_HOST/EC2_USER/EC2_SSH_KEY y EC2_IP cargados; 5432 cerrado. ./scripts/check.sh → CHECK OK; ./scripts/check.sh --full → CHECK OK + SMOKE OK."
     },
     {
       "id": "feat-009",
@@ -54,8 +54,8 @@
         "feat-002"
       ],
       "status": "done",
-    "openspec_change": "add-user-authentication",
-    "evidence": "Tareas 1.1-6.3 completadas (tasks.md 21/21): uv run pytest -q -> 33 passed (test_auth 16, test_auth_service 8, test_security 7, test_health 2); ./scripts/check.sh --full -> CHECK OK con SMOKE OK (health, SPA, fallback); npx ng build -> OK; en vivo en http://localhost:8080: login admin@library.local -> 200, GET /api/auth/me -> 200 con role admin, register dominio .local -> 201, email malformado -> 422. D10: EmailField acepta special-use (.local) del contrato; ruff check/format limpio. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-user-authentication; specs de authentication sincronizados."
+      "openspec_change": "add-user-authentication",
+      "evidence": "Tareas 1.1-6.3 completadas (tasks.md 21/21): uv run pytest -q -> 33 passed (test_auth 16, test_auth_service 8, test_security 7, test_health 2); ./scripts/check.sh --full -> CHECK OK con SMOKE OK (health, SPA, fallback); npx ng build -> OK; en vivo en http://localhost:8080: login admin@library.local -> 200, GET /api/auth/me -> 200 con role admin, register dominio .local -> 201, email malformado -> 422. D10: EmailField acepta special-use (.local) del contrato; ruff check/format limpio. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-user-authentication; specs de authentication sincronizados."
     },
     {
       "id": "feat-004",

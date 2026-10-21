@@ -1,9 +1,9 @@
 # Progreso — dev-a (Autenticación y Autorización + Terraform)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-20 20:42
-**Feature activa:** feat-006 `provision-aws-infrastructure` (última que queda de dev-a)
-**Rama:** feature/feat-006-provision-aws-infrastructure (integrado `origin/develop` con feat-001…005, 007, 008 y 009)
+**Last Updated (última actualización):** 2026-10-21 02:05
+**Feature activa:** ninguna de dev-a (feat-006 archivada; queda feat-010 release, compartida)
+**Rama:** `develop` (feat-006 integrada con el PR #1; el merge se rehizo para incluir el archivo y el cierre del cambio)
 
 ## What's Done (hecho)
 - feat-003, feat-004 y feat-005 integrados y archivados en `develop`:
@@ -40,8 +40,23 @@
   - [x] `develop` integrado en la rama (merge 33f7939; conflicto resuelto solo en este archivo).
   - [x] `terraform.tfvars` restaurado con los valores reales (`key_name = "app-1-key"`, `admin_cidr = "38.226.159.83/32"`).
   - [x] `tfplan` regenerado: **0 to add, 1 to change, 0 to destroy** (solo la regla 22 del SG; la instancia no se toca).
-  - [ ] `terraform apply tfplan` → pendiente de confirmación del usuario.
-  - [ ] `EC2_USER`, verificación por SSH y escenarios del spec.
+  - [x] `terraform apply tfplan` → **0 added, 1 changed, 0 destroyed** (solo la regla 22 del SG, ya con la IP actual).
+  - [x] Verificación por SSH: `/var/log/user-data.done` = `2026-10-20T21:22:05+00:00`, `docker compose version`
+    2.40.3, `~/app/.env` presente (260 B, 600).
+  - [x] `terraform plan -detailed-exitcode` → **"No changes"** (exit 0).
+  - [x] Puertos: 22 abierto solo desde `38.226.159.83/32`, 5432 cerrado, 80 acepta conexión pero sin respuesta
+    (la app aún no está desplegada).
+  - [x] Secrets cargados: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY` (y `EC2_IP` como respaldo) — verificado con `gh secret list`.
+  - [x] Escenarios del spec verificados (7.1): plan «No changes», SG solo con 22 desde `38.226.159.83/32` y
+    sin regla 5432, desde la EIP de la propia instancia (otra IP) el 22 no conecta, 5432 rechaza conexiones,
+    el 80 llega por el SG pero aún no hay servicio desplegado.
+  - [x] Tareas 6.1, 6.3, 6.4 y 7.1 marcadas en `tasks.md`; cambio archivado en
+    `openspec/changes/archive/2026-10-20-provision-aws-infrastructure` y spec principal creada en
+    `openspec/specs/infrastructure/spec.md`.
+  - **Clave SSH (decisión pendiente):** el par `app-1-key` de AWS no tiene `.pem` en ninguna máquina
+    (el `~/.ssh/app-1-key.pem` corresponde al par `key_rsa`). Se añadió su clave pública a
+    `~ubuntu/.ssh/authorized_keys` para poder entrar; hay que decidir si se recrea la instancia con `key_rsa`
+    o se deja así.
 
 ## Evidence of Completion (evidencia)
 - [x] `cd backend && uv run pytest -q` → **88 passed**
@@ -55,16 +70,24 @@
 - [x] `terraform output` → `public_ip = 184.197.133.138`, `ssh_command = ssh -i ~/.ssh/app-1-key.pem ubuntu@184.197.133.138`
 - [x] `terraform fmt -check -recursive && terraform init && terraform validate` → OK
 - [x] `terraform plan -out tfplan` → **0 to add, 1 to change, 0 to destroy** (SG: 22 pasa de 190.43.149.172/32 a 38.226.159.83/32)
+- [x] `terraform apply tfplan` → **Apply complete! Resources: 0 added, 1 changed, 0 destroyed**
+- [x] `ssh -i ~/.ssh/app-1-key.pem ubuntu@184.197.133.138` → user-data OK, Docker Compose 2.40.3, swap 2 GB
+- [x] `nc` a 5432 → cerrado; `curl http://184.197.133.138` → sin respuesta (pendiente del deploy)
+- [x] `./scripts/check.sh --full` (2026-10-21) → **CHECK OK** + **SMOKE OK** (`GET / -> 200 (SPA)`, fallback de rutas 200).
+  Requirió liberar los puertos 80 y 5432 ocupados por `infra-frontend-1`/`app_fastapi`/`app_postgres` de otros
+  proyectos locales; se volvieron a levantar al terminar.
+- [x] Pull Request #1 `feature/feat-006-provision-aws-infrastructure` → `develop` (merge rehecho con el cierre del cambio)
 
 ## Archived (archivado)
+- `provision-aws-infrastructure` movido a `openspec/changes/archive/2026-10-20-provision-aws-infrastructure`.
+  Spec principal creada: `openspec/specs/infrastructure/spec.md` (5 requisitos, 11 escenarios). 15/15 tareas.
 - `add-user-administration` movido a `openspec/changes/archive/2026-10-20-add-user-administration`.
 - Spec principal creada y validada: `openspec/specs/user-administration/spec.md` (5 requisitos, 11 escenarios).
 - feat-005 marcada como `done` en `feature_list.json`.
 
 ## What's Next (qué sigue)
-1. Cerrar feat-006: reconciliar `terraform.tfvars`/SG, verificar arranque por SSH, cargar `EC2_USER`,
-   registrar 6.1/6.3/6.4/7.1, `/opsx-verify` y PR a `develop`; después `/opsx-archive`.
-2. feat-010 (release): `main`, CI en verde, despliegue en la EC2 y demo con los dos desarrolladores.
+1. feat-010 (release): `main`, CI en verde, `gh workflow run deploy.yml` y demo con los dos desarrolladores.
+   El escenario "Acceso web" del spec de infraestructura se cierra con ese primer despliegue.
 
 ## Blockers / Risks (bloqueos y riesgos)
 - `docker compose --build` depende de `ghcr.io/astral-sh/uv:latest`; el primer intento de `--full` puede fallar
@@ -78,6 +101,7 @@
   huérfanas. Sin backend remoto por ahora (fuera del alcance de feat-006).
 - `http://184.197.133.138` aún no responde: el workflow de deploy está en `workflow_dispatch` y la app no está
   desplegada, así que el escenario "Acceso web" del spec se cierra con feat-010.
+- `ci.yml` y `deploy.yml` siguen en solo `workflow_dispatch`: no hay CI automático en los Pull Requests.
 
 ## Notes for Next Session (notas para la próxima sesión)
 - No hacer commit sin confirmación del usuario (regla git-discipline).
