@@ -1,9 +1,9 @@
 # Progreso — dev-a (Autenticación y Autorización + Terraform)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-21 02:05
-**Feature activa:** ninguna de dev-a (feat-006 archivada; queda feat-010 release, compartida)
-**Rama:** `develop` (feat-006 integrada con el PR #1; el merge se rehizo para incluir el archivo y el cierre del cambio)
+**Last Updated (última actualización):** 2026-10-21 03:05
+**Feature activa:** feat-010 release (compartida). CI/CD y despliegue automático ya funcionando.
+**Rama:** `develop` (main desplegado con `v1.0.1`)
 
 ## What's Done (hecho)
 - feat-003, feat-004 y feat-005 integrados y archivados en `develop`:
@@ -34,6 +34,21 @@
 | Admin intenta desactivarse | 409 "No puedes desactivar tu propia cuenta"; el interruptor vuelve a activo |
 | Limpiar búsqueda | vuelve al listado completo |
 | Selector en fila admin | muestra "Administrador" correctamente tras el fix |
+
+## CI/CD y despliegue (2026-10-21)
+- `ci.yml` corre en **cada push a `develop` y `main`**: `check.sh --full` + cobertura backend y frontend con
+  umbral del 80 % (Karma 109 tests, 99,7 % statements; pytest 93,8 %) y publica los artefactos
+  `coverage-backend` y `coverage-frontend`.
+- `deploy.yml` se dispara con **tags `v*`**; el job `guard` exige que el tag esté en `main`.
+- Acceso sin claves de AWS: **OIDC** con el rol `library-g2-github-deploy` (Terraform `github_oidc.tf`), que solo
+  puede `Authorize/RevokeSecurityGroupIngress` sobre el SG. El workflow abre el 22 solo a la IP del runner y lo
+  cierra con `if: always()`.
+- Variables del repo: `AWS_DEPLOY_ROLE_ARN`, `AWS_SECURITY_GROUP_ID`, `AWS_REGION`; secrets `EC2_HOST`,
+  `EC2_USER`, `EC2_SSH_KEY` (+ `EC2_IP` de respaldo).
+- **v1.0.0**: primera versión, desplegada a mano (el deploy automático falló por el SG y luego por el `sub` OIDC).
+- **v1.0.1**: primer despliegue **automático** correcto — run `39534507828` (intento 2) en verde: guard, CI
+  (sensores + 2 coberturas), build a GHCR y deploy a la EC2. Smoke: `GET /api/health` ok, `GET /` 200.
+  El SG quedó limpio (80 a 0.0.0.0/0, 22 solo desde `38.226.159.83/32`).
 
 ## What's In Progress (en curso)
 - [ ] feat-006: tareas 6.1, 6.3, 6.4 y 7.1 pendientes de cerrar con evidencia.

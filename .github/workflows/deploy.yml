@@ -1,8 +1,8 @@
 name: Deploy
 
-# Producción se despliega SOLO al publicar un tag de versión (v1.0.0, v1.1.0…),
-# y ese tag tiene que apuntar a un commit de main. El job "guard" lo comprueba.
-# workflow_dispatch queda para un despliegue manual de emergencia.
+# Único disparador automático: publicar un tag de versión sobre main (v1.0.1, v1.1.0…).
+# Los push a develop o main no ejecutan nada. El job "guard" comprueba que el tag
+# esté contenido en main. workflow_dispatch queda solo para una emergencia manual.
 on:
   push:
     tags: ['v*']

@@ -12,7 +12,8 @@ Navegador ──HTTP:80──► frontend (Nginx) ──/api──► backend (F
 ## Pipeline
 
 ### Integración continua (`.github/workflows/ci.yml`)
-Se ejecuta **en cada push a `develop` y a `main`**, y también cuando lo invoca `deploy.yml`:
+**No se ejecuta con los push.** Solo corre cuando lo invoca `deploy.yml` (al publicar un tag de versión sobre
+`main`) o a mano con `workflow_dispatch`:
 
 | Job | Qué hace |
 |---|---|
@@ -20,13 +21,13 @@ Se ejecuta **en cada push a `develop` y a `main`**, y también cuando lo invoca 
 | `coverage-backend` | `pytest --cov --cov-fail-under=80` → publica el artefacto `coverage-backend` |
 | `coverage-frontend` | `npm run test:ci` con umbral del 80 % en Karma → publica el artefacto `coverage-frontend` |
 
-Los dos artefactos (`coverage.xml`/`htmlcov` y `frontend/coverage/`) se generan en **cada push** y se descargan
-desde la pestaña *Actions* del run.
+Los dos artefactos (`coverage.xml`/`htmlcov` y `frontend/coverage/`) se generan en **cada ejecución** del
+workflow y se descargan desde la pestaña *Actions* del run.
 
 ### Despliegue (`deploy.yml`)
-Producción se despliega **solo al publicar un tag de versión** (`v1.0.0`, `v1.1.0`…) y el tag tiene que apuntar a
-un commit de `main`; el job `guard` lo verifica y aborta si no es así. `workflow_dispatch` queda para una
-emergencia.
+Producción se despliega **solo al publicar un tag de versión sobre `main`** (`v1.0.1`, `v1.1.0`…); el tag tiene
+que apuntar a un commit de `main` y el job `guard` lo verifica. Un push a `develop` o a `main` no dispara nada:
+primero se integra, después se etiqueta. `workflow_dispatch` queda para una emergencia manual.
 
 1. `guard`: comprueba que el tag está contenido en `main`.
 2. `check`: reutiliza `ci.yml` completo (sensores + las dos coberturas); si la cobertura baja del 80 %, no hay despliegue.

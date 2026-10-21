@@ -1,10 +1,8 @@
 name: CI
 
-# Se ejecuta en cada push a develop y main (con sus dos artefactos de cobertura),
-# cuando lo invoca deploy.yml (workflow_call) y a mano (workflow_dispatch).
+# No se ejecuta con los push: solo cuando lo invoca deploy.yml (workflow_call),
+# es decir, al publicar un tag de versión sobre main, o a mano (workflow_dispatch).
 on:
-  push:
-    branches: [develop, main]
   workflow_call:
   workflow_dispatch:
 
