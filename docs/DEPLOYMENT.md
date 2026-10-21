@@ -9,15 +9,40 @@
 Navegador ──HTTP:80──► frontend (Nginx) ──/api──► backend (FastAPI :8000) ──► db (PostgreSQL 16)
 ```
 
-## Pipeline (`.github/workflows/deploy.yml`, en cada push a `main`)
-Los workflows son de dev-b (feat-009). Con Git Flow, a `main` solo llegan las ramas `release/*` y `hotfix/*` por Pull Request:
-cada merge a `main` despliega. Los PR de `feature/*` hacia `develop` solo ejecutan los sensores (`ci.yml`).
-1. `check`: ejecuta `./scripts/check.sh --full` (los mismos sensores que en local, reutilizados de `ci.yml`).
-2. `build`: construye `backend` y `frontend` y los sube a `ghcr.io/<owner>/<repo>-backend|frontend` con tags `latest` y `<sha>`.
-3. `deploy`: copia `docker-compose.prod.yml` por SCP, inicia sesión en GHCR desde el servidor y ejecuta `docker compose pull && up -d`.
-4. `smoke`: `scripts/smoke.sh http://<EC2_HOST>` desde el runner.
+## Pipeline
 
-Cada Pull Request ejecuta `ci.yml` (solo los sensores): es el control antes de integrar.
+### Integración continua (`.github/workflows/ci.yml`)
+Se ejecuta **en cada push a `develop` y a `main`**, y también cuando lo invoca `deploy.yml`:
+
+| Job | Qué hace |
+|---|---|
+| `check` | `./scripts/check.sh --full` (ruff, pytest, Karma, `ng build`, terraform y smoke con Docker) |
+| `coverage-backend` | `pytest --cov --cov-fail-under=80` → publica el artefacto `coverage-backend` |
+| `coverage-frontend` | `npm run test:ci` con umbral del 80 % en Karma → publica el artefacto `coverage-frontend` |
+
+Los dos artefactos (`coverage.xml`/`htmlcov` y `frontend/coverage/`) se generan en **cada push** y se descargan
+desde la pestaña *Actions* del run.
+
+### Despliegue (`deploy.yml`)
+Producción se despliega **solo al publicar un tag de versión** (`v1.0.0`, `v1.1.0`…) y el tag tiene que apuntar a
+un commit de `main`; el job `guard` lo verifica y aborta si no es así. `workflow_dispatch` queda para una
+emergencia.
+
+1. `guard`: comprueba que el tag está contenido en `main`.
+2. `check`: reutiliza `ci.yml` completo (sensores + las dos coberturas); si la cobertura baja del 80 %, no hay despliegue.
+3. `build`: construye `backend` y `frontend` y los sube a `ghcr.io/<owner>/<repo>-backend|frontend` con tags `latest` y `<versión>`.
+4. `deploy`: copia `docker-compose.prod.yml` por SCP, inicia sesión en GHCR desde el servidor y ejecuta `docker compose pull && up -d`.
+5. `smoke`: `scripts/smoke.sh http://<EC2_HOST>` desde el runner.
+
+### Publicar la primera versión
+```bash
+# 1. llevar develop a main por Pull Request (CI en verde)
+# 2. etiquetar la versión
+git checkout main && git pull
+git tag -a v1.0.0 -m "Primera versión: gestión de libros"
+git push origin v1.0.0
+```
+Al subir el tag arranca `deploy.yml` y, si sensores y coberturas pasan, la aplicación queda en `http://<EC2_HOST>`.
 
 ## Secrets del repositorio (Settings → Secrets and variables → Actions)
 Los carga dev-a, que es quien crea la EC2.

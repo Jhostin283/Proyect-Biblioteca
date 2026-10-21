@@ -1,8 +1,10 @@
 name: CI
 
-# Triggers automáticos deshabilitados temporalmente hasta finalizar el proyecto.
-# Solo queda el lanzamiento manual (workflow_dispatch) y workflow_call.
+# Se ejecuta en cada push a develop y main (con sus dos artefactos de cobertura),
+# cuando lo invoca deploy.yml (workflow_call) y a mano (workflow_dispatch).
 on:
+  push:
+    branches: [develop, main]
   workflow_call:
   workflow_dispatch:
 
@@ -29,3 +31,59 @@ jobs:
 
       - name: Ejecutar sensores
         run: ./scripts/check.sh --full
+
+  coverage-backend:
+    name: Cobertura backend (umbral 80%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Tests con cobertura y umbral del 80%
+        working-directory: backend
+        run: |
+          uv run --frozen pytest -q \
+            --cov \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-fail-under=80
+
+      - name: Publicar artefacto de cobertura del backend
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: |
+            backend/coverage.xml
+            backend/htmlcov/
+          retention-days: 14
+
+  coverage-frontend:
+    name: Cobertura frontend (umbral 80%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Tests con cobertura y umbral del 80%
+        working-directory: frontend
+        run: npm run test:ci
+
+      - name: Publicar artefacto de cobertura del frontend
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: frontend/coverage/
+          retention-days: 14

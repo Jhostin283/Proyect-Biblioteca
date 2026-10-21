@@ -1,8 +1,11 @@
 name: Deploy
 
-# Trigger automático de despliegue deshabilitado temporalmente hasta finalizar el proyecto.
-# Solo queda el lanzamiento manual (workflow_dispatch).
+# Producción se despliega SOLO al publicar un tag de versión (v1.0.0, v1.1.0…),
+# y ese tag tiene que apuntar a un commit de main. El job "guard" lo comprueba.
+# workflow_dispatch queda para un despliegue manual de emergencia.
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
 
 concurrency:
@@ -14,22 +17,50 @@ permissions:
   packages: write
 
 jobs:
+  guard:
+    name: Verificar que el tag está en main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: El tag debe apuntar a un commit de main
+        if: github.event_name == 'push'
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::El tag ${GITHUB_REF_NAME} no apunta a un commit de main. Integra y publica primero en main."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} verificado sobre main."
+
+  # Ejecuta todo el workflow de CI: sensores + cobertura de backend y frontend.
+  # Si cualquiera de sus jobs falla (incluido el umbral del 80 %), el despliegue no arranca.
   check:
     uses: ./.github/workflows/ci.yml
 
   build:
     name: Build y push a GHCR
-    needs: check
+    needs: [guard, check]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
       prefix: ${{ steps.vars.outputs.prefix }}
+      version: ${{ steps.vars.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
       - id: vars
-        name: Nombre de imagen (GHCR exige minúsculas)
-        run: echo "prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        name: Nombre de imagen (GHCR exige minúsculas) y versión
+        run: |
+          echo "prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: docker/setup-buildx-action@v3
 
@@ -46,7 +77,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.vars.outputs.prefix }}-backend:latest
-            ${{ steps.vars.outputs.prefix }}-backend:${{ github.sha }}
+            ${{ steps.vars.outputs.prefix }}-backend:${{ steps.vars.outputs.version }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
@@ -57,7 +88,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.vars.outputs.prefix }}-frontend:latest
-            ${{ steps.vars.outputs.prefix }}-frontend:${{ github.sha }}
+            ${{ steps.vars.outputs.prefix }}-frontend:${{ steps.vars.outputs.version }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -70,7 +101,7 @@ jobs:
       EC2_HOST: ${{ secrets.EC2_HOST || secrets.EC2_IP }}
       EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
       IMAGE_PREFIX: ${{ needs.build.outputs.prefix }}
-      TAG: ${{ github.sha }}
+      TAG: ${{ needs.build.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
