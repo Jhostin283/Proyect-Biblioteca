@@ -1,8 +1,8 @@
 # Progreso — dev-b (Gestión de Libros + GitHub Actions)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-21 03:30
-**Feature activa:** ninguna — `feat-010` (release) cerrada; el backlog quedó completo (10/10 en `done`).
+**Last Updated (última actualización):** 2026-10-21 04:20
+**Feature activa:** ninguna — `feat-011` (rediseño de UI) cerrada; backlog 11/11 en `done`.
 **Rama:** `develop` y `main` sincronizadas; release `v1.0.1` desplegada en la EC2.
 
 ## What's Done (hecho)
@@ -48,6 +48,13 @@
   sin scroll horizontal (`scrollWidth === clientWidth`), 0 imágenes sin `alt`, 0 campos sin `label`,
   avisos con `role="alert"`/`aria-live` y foco visible global (`:focus-visible`).
 - Tests: 123 en verde (14 nuevos) y cobertura 99,6 % statements / 90,9 % branches.
+
+## Cierre de feat-011 (rediseño de UI)
+- PR #2 (`feature/feat-011-redesign-library-ui`) mergeado en `develop` (`45c7acd`).
+- Cambio archivado en `openspec/changes/archive/2026-10-21-redesign-library-ui`.
+- Specs principales sincronizadas: `openspec/specs/library-ui/spec.md` (nueva, 5 requisitos) y
+  `openspec/specs/books/spec.md` (10 requisitos, con portada y vista previa).
+- `feature_list.json`: feat-011 en `done` con la evidencia.
 
 ## What's In Progress (en curso)
 - [x] Ninguna tarea pendiente: todos los checklists de las dos máquinas están completos.

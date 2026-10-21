@@ -127,9 +127,9 @@
       "dependencies": [
         "feat-008"
       ],
-      "status": "in-progress",
+      "status": "done",
       "openspec_change": "redesign-library-ui",
-      "evidence": "Tareas 23/23 (tasks.md). ./scripts/check.sh --full → CHECK OK + SMOKE OK (123 tests de frontend, cobertura 99,6 % statements / 90,9 % branches; 88 tests de backend; ng build; terraform). Revisión visual con Chromium headless de las 8 vistas a 1280 px y 390 px: sin scroll horizontal, 0 imágenes sin alt, 0 campos sin label. Portadas resueltas por ISBN con Open Library y marcador local."
+      "evidence": "Tareas 25/25. PR #2 mergeado en develop (45c7acd). ./scripts/check.sh --full → CHECK OK + SMOKE OK (123 tests de frontend con 99,6 % statements / 90,9 % branches, 88 de backend, ng build y terraform). Revisión visual de las 8 vistas a 1280 px y 390 px con Chromium headless: sin scroll horizontal, 0 imágenes sin alt, 0 campos sin label. Cambio archivado en openspec/changes/archive/2026-10-21-redesign-library-ui; specs principales actualizadas (library-ui nueva, books con portada y vista previa)."
     }
   ]
 }
