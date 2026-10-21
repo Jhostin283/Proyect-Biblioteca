@@ -10,6 +10,11 @@
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  github_owner = split("/", var.github_repository)[0]
+  github_repo  = split("/", var.github_repository)[1]
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
@@ -39,12 +44,16 @@ data "aws_iam_policy_document" "github_assume_role" {
     }
 
     # Solo los flujos del repositorio: main y los tags de versión v*.
+    # GitHub emite dos formatos de "sub": el clásico (owner/repo) y el nuevo con
+    # IDs inmutables (owner@id/repo@id). Se aceptan los dos.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:${var.github_repository}:ref:refs/heads/main",
         "repo:${var.github_repository}:ref:refs/tags/v*",
+        "repo:${local.github_owner}@*/${local.github_repo}@*:ref:refs/heads/main",
+        "repo:${local.github_owner}@*/${local.github_repo}@*:ref:refs/tags/v*",
       ]
     }
   }
