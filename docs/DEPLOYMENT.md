@@ -31,8 +31,13 @@ emergencia.
 1. `guard`: comprueba que el tag está contenido en `main`.
 2. `check`: reutiliza `ci.yml` completo (sensores + las dos coberturas); si la cobertura baja del 80 %, no hay despliegue.
 3. `build`: construye `backend` y `frontend` y los sube a `ghcr.io/<owner>/<repo>-backend|frontend` con tags `latest` y `<versión>`.
-4. `deploy`: copia `docker-compose.prod.yml` por SCP, inicia sesión en GHCR desde el servidor y ejecuta `docker compose pull && up -d`.
+4. `deploy`: pide un token **OIDC** a GitHub y asume el rol IAM `library-g2-github-deploy`, que solo puede tocar
+   las reglas del security group. Abre el 22 **solo a la IP del runner**, copia `docker-compose.prod.yml` por SCP,
+   ejecuta `docker compose pull && up -d` y cierra la regla en un paso `if: always()`.
 5. `smoke`: `scripts/smoke.sh http://<EC2_HOST>` desde el runner.
+
+El 22 nunca se abre a Internet: la regla temporal se crea al empezar el job y se revoca al terminar (si ya existía,
+por ejemplo porque el runner coincide con `admin_cidr`, no se revoca).
 
 ### Publicar la primera versión
 ```bash
@@ -52,6 +57,21 @@ Los carga dev-a, que es quien crea la EC2.
 | `EC2_IP` o `EC2_HOST` | IP pública de la instancia (`terraform output -raw public_ip`) |
 | `EC2_USER` (opcional) | `ubuntu` (por defecto si no se define) |
 | `EC2_SSH_KEY` | Contenido completo de la llave `.pem` |
+
+### Variables (Settings → Secrets and variables → Actions → Variables)
+Las crea dev-a después del `terraform apply` (salidas `deploy_role_arn` y `security_group_id`):
+
+| Variable | Valor |
+|---|---|
+| `AWS_DEPLOY_ROLE_ARN` | `terraform output -raw deploy_role_arn` |
+| `AWS_SECURITY_GROUP_ID` | `terraform output -raw security_group_id` |
+| `AWS_REGION` (opcional) | `us-east-1` |
+
+```bash
+gh variable set AWS_DEPLOY_ROLE_ARN -b "$(terraform -chdir=infra/terraform output -raw deploy_role_arn)"
+gh variable set AWS_SECURITY_GROUP_ID -b "$(terraform -chdir=infra/terraform output -raw security_group_id)"
+gh variable set AWS_REGION -b "us-east-1"
+```
 
 ```bash
 gh secret set EC2_IP --body "$(terraform -chdir=infra/terraform output -raw public_ip)"

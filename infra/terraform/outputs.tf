@@ -16,3 +16,13 @@ output "ssh_command" {
   description = "Comando SSH listo para pegar. Ajusta la ruta del .pem a la de tu máquina (por ejemplo ~/keys/<llave>.pem)."
   value       = "ssh -i ~/.ssh/${var.key_name}.pem ubuntu@${aws_eip.app.public_ip}"
 }
+
+output "security_group_id" {
+  description = "ID del security group de la app. Es el valor de la variable AWS_SECURITY_GROUP_ID del repositorio."
+  value       = aws_security_group.app.id
+}
+
+output "deploy_role_arn" {
+  description = "ARN del rol que asume GitHub Actions por OIDC. Es el valor de la variable AWS_DEPLOY_ROLE_ARN del repositorio."
+  value       = aws_iam_role.github_deploy.arn
+}

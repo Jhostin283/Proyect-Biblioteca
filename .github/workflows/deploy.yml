@@ -97,6 +97,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
     env:
       EC2_HOST: ${{ secrets.EC2_HOST || secrets.EC2_IP }}
       EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
@@ -104,6 +108,39 @@ jobs:
       TAG: ${{ needs.build.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+
+      # Sin claves de AWS de larga duración: el runner pide un token OIDC y asume
+      # el rol que solo puede abrir/cerrar el 22 de este security group.
+      - name: Configurar credenciales de AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: gh-deploy-${{ github.run_id }}
+
+      - name: Abrir el 22 solo a la IP del runner
+        id: sg
+        run: |
+          RUNNER_IP="$(curl -s --max-time 10 https://checkip.amazonaws.com)"
+          if ! [[ "$RUNNER_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::No se pudo obtener la IP pública del runner: '$RUNNER_IP'"
+            exit 1
+          fi
+          echo "ip=$RUNNER_IP" >> "$GITHUB_OUTPUT"
+          ADDED=true
+          if ! aws ec2 authorize-security-group-ingress \
+              --group-id "${{ vars.AWS_SECURITY_GROUP_ID }}" \
+              --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" 2>/tmp/sg.err; then
+            if grep -q "InvalidPermission.Duplicate" /tmp/sg.err; then
+              # La regla ya existía (p. ej. es la IP de admin_cidr): no la tocamos al final.
+              ADDED=false
+            else
+              cat /tmp/sg.err
+              exit 1
+            fi
+          fi
+          echo "added=$ADDED" >> "$GITHUB_OUTPUT"
+          echo "22 abierto para ${RUNNER_IP}/32 (regla nueva: $ADDED)"
 
       - name: Configurar SSH
         run: |
@@ -147,3 +184,15 @@ jobs:
         run: |
           ssh -i ~/.ssh/ec2.pem "$EC2_USER@$EC2_HOST" \
             "cd ~/app && docker compose -f docker-compose.prod.yml logs --tail=80 backend frontend" || true
+
+      # Se ejecuta siempre, incluso si el despliegue falla a mitad.
+      - name: Cerrar el 22 al runner
+        if: always() && steps.sg.outputs.added == 'true'
+        run: |
+          RUNNER_IP="${{ steps.sg.outputs.ip }}"
+          if [ -n "$RUNNER_IP" ]; then
+            aws ec2 revoke-security-group-ingress \
+              --group-id "${{ vars.AWS_SECURITY_GROUP_ID }}" \
+              --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" || true
+            echo "22 cerrado para ${RUNNER_IP}/32"
+          fi
