@@ -1,0 +1,14 @@
+# Plantilla de configuración local. Cópiala a terraform.tfvars (ignorado por git)
+# y completa los valores reales antes de plan/apply:
+#   cp terraform.tfvars.example terraform.tfvars
+
+# Región de AWS (opcional; por defecto us-east-1)
+region = "us-east-1"
+
+# Nombre de un par de claves SSH YA existente en esa región.
+# Créalo tú en la consola o con: aws ec2 create-key-pair --key-name library-g2 --query 'KeyMaterial' --output text > ~/keys/library-g2.pem
+key_name = "library-g2"
+
+# Tu IP pública con prefijo /32 (solo desde aquí entra SSH).
+# Obtén la IP con: curl -s https://checkip.amazonaws.com
+admin_cidr = "203.0.113.10/32"

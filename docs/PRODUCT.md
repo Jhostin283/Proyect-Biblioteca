@@ -176,7 +176,7 @@ reescribe**: genera `design.md` y `tasks.md` con `/opsx-ff <cambio>` y luego imp
    - dev-a: feat-003 → feat-004 → feat-005 (Terraform ya quedó listo en la fase 0).
    - dev-b: feat-007 → feat-008 (el CI/CD ya quedó listo en la fase 0).
 
-   Cada uno trabaja en una rama `feature/<change-name>` creada desde `develop` y abre un Pull Request hacia `develop`;
+   Cada uno trabaja en una rama `feature/<feat-id>-<change-name>` creada desde `develop` y abre un Pull Request hacia `develop`;
    el CI debe estar en verde para integrar.
    Antes de abrir el PR: `/sync` y `./scripts/check.sh`.
 3. **Fase 2 — juntos.** feat-010: rama `release/1.0.0` desde `develop`, PR a `main` (despliega), smoke test en la EC2 y demo
