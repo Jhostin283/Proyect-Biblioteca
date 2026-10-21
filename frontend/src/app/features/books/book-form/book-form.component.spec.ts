@@ -1,9 +1,11 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { Book, BookService } from '../../../core/books/book.service';
+import { BookCoverComponent } from '../../../shared/book-cover/book-cover.component';
 import { BookFormComponent } from './book-form.component';
 
 const book: Book = {
@@ -135,6 +137,28 @@ describe('BookFormComponent', () => {
 
     component.bookForm.patchValue({ publication_year: 1200 });
     expect(component.yearError).toBe('El año de publicación no es válido');
+  });
+
+  it('muestra la vista previa de la portada con un ISBN completo', () => {
+    setup();
+    fixture.detectChanges();
+    component.bookForm.patchValue({ isbn: '978-0-306-40615-7', title: 'El Quijote' });
+    fixture.detectChanges();
+
+    const covers = fixture.debugElement.queryAll(By.directive(BookCoverComponent));
+    expect(covers.length).toBe(1);
+    expect(covers[0].componentInstance.isbn()).toBe('9780306406157');
+    expect(covers[0].componentInstance.title()).toBe('El Quijote');
+  });
+
+  it('no pide portada si el ISBN está incompleto', () => {
+    setup();
+    fixture.detectChanges();
+    component.bookForm.patchValue({ isbn: '123', title: 'Sin portada' });
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.queryAll(By.directive(BookCoverComponent)).length).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.preview__empty')).not.toBeNull();
   });
 
   it('no envía el formulario inválido', () => {

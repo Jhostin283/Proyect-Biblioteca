@@ -1,89 +1,109 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Book, BookService } from '../../../core/books/book.service';
+
 import { AuthService } from '../../../core/auth/auth.service';
+import { Book, BookService } from '../../../core/books/book.service';
+import { BookCoverComponent } from '../../../shared/book-cover/book-cover.component';
+import { StateComponent } from '../../../shared/state/state.component';
 
 @Component({
   selector: 'app-book-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, DatePipe, RouterLink, BookCoverComponent, StateComponent],
   template: `
-    <div class="detail-container">
+    <div class="page page--narrow">
       @if (loading()) {
-        <p class="loading-text">Cargando detalles del libro...</p>
+        <app-state variant="loading" title="Cargando el libro…" />
       } @else if (notFound()) {
-        <div class="not-found-card">
-          <h2>Libro no encontrado</h2>
-          <p>El libro solicitado no existe o fue eliminado.</p>
-          <a routerLink="/books" class="btn btn-primary">Volver al catálogo</a>
+        <div class="card">
+          <app-state
+            variant="empty"
+            title="Libro no encontrado"
+            message="El libro solicitado no existe o fue eliminado."
+            actionLabel="Volver al catálogo"
+          />
+          <div class="not-found__action">
+            <a routerLink="/books" class="btn btn--secondary">&larr; Volver al catálogo</a>
+          </div>
         </div>
       } @else {
         @if (book(); as b) {
-          <div class="card detail-card">
-            <div class="card-header">
-              <h2>{{ b.title }}</h2>
-              <span class="badge">{{ b.genre }}</span>
+          <article class="detail card">
+            <div class="detail__cover">
+              <app-book-cover
+                [isbn]="b.isbn"
+                [title]="b.title"
+                [author]="b.author"
+                size="lg"
+                [lazy]="false"
+              />
             </div>
 
-            <div class="card-body">
-              <div class="detail-row">
-                <span class="label">Autor:</span>
-                <span class="value">{{ b.author }}</span>
+            <div class="detail__body">
+              <div class="detail__heading">
+                <span class="badge badge--librarian">{{ b.genre }}</span>
+                <h1>{{ b.title }}</h1>
+                <p class="detail__author">{{ b.author }} · {{ b.publication_year }}</p>
               </div>
 
-              <div class="detail-row">
-                <span class="label">ISBN:</span>
-                <span class="value">{{ b.isbn }}</span>
-              </div>
-
-              <div class="detail-row">
-                <span class="label">Año de publicación:</span>
-                <span class="value">{{ b.publication_year }}</span>
-              </div>
+              <dl class="detail__facts">
+                <div>
+                  <dt>ISBN</dt>
+                  <dd class="detail__isbn">{{ b.isbn }}</dd>
+                </div>
+                <div>
+                  <dt>Año de publicación</dt>
+                  <dd>{{ b.publication_year }}</dd>
+                </div>
+                <div>
+                  <dt>Género</dt>
+                  <dd>{{ b.genre }}</dd>
+                </div>
+                <div>
+                  <dt>Registrado</dt>
+                  <dd>{{ b.created_at | date: 'medium' }}</dd>
+                </div>
+              </dl>
 
               @if (b.description) {
-                <div class="detail-row description-row">
-                  <span class="label">Descripción:</span>
-                  <p class="value description-text">{{ b.description }}</p>
-                </div>
+                <section class="detail__description" aria-label="Descripción">
+                  <h2>Descripción</h2>
+                  <p>{{ b.description }}</p>
+                </section>
               }
 
-              <div class="metadata-row">
-                <small>Registrado el: {{ b.created_at | date:'medium' }}</small>
-              </div>
-            </div>
-
-            <div class="card-footer">
-              <a routerLink="/books" class="btn btn-outline">
-                &larr; Volver al catálogo
-              </a>
-
-              @if (canManageBooks()) {
-                <div class="admin-actions">
-                  <a [routerLink]="['/books', b.id, 'edit']" class="btn btn-secondary">
-                    Editar
-                  </a>
-                  <button (click)="confirmDelete()" class="btn btn-danger">
+              <footer class="detail__actions">
+                <a routerLink="/books" class="btn btn--secondary">&larr; Volver al catálogo</a>
+                @if (canManageBooks()) {
+                  <a [routerLink]="['/books', b.id, 'edit']" class="btn btn--secondary">Editar</a>
+                  <button type="button" class="btn btn--danger" (click)="confirmDelete()">
                     Eliminar
                   </button>
-                </div>
-              }
+                }
+              </footer>
             </div>
-          </div>
+          </article>
         }
       }
 
-      <!-- Modal de Confirmación de Eliminación -->
       @if (showDeleteModal()) {
-        <div class="modal-backdrop">
-          <div class="modal-dialog">
-            <h3>Confirmar eliminación</h3>
-            <p>¿Seguro que quieres eliminar este libro?</p>
-            <p><strong>"{{ book()?.title }}"</strong> de {{ book()?.author }}</p>
-            <div class="modal-actions">
-              <button (click)="cancelDelete()" class="btn btn-outline">Cancelar</button>
-              <button (click)="executeDelete()" class="btn btn-danger">Sí, eliminar</button>
+        <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+          <div class="modal card">
+            <div class="card__body">
+              <h2 id="delete-title">Confirmar eliminación</h2>
+              <p>
+                ¿Seguro que quieres eliminar <strong>{{ book()?.title }}</strong> de
+                {{ book()?.author }}?
+              </p>
+            </div>
+            <div class="card__footer modal__actions">
+              <button type="button" class="btn btn--secondary" (click)="cancelDelete()">
+                Cancelar
+              </button>
+              <button type="button" class="btn btn--danger" (click)="executeDelete()">
+                Sí, eliminar
+              </button>
             </div>
           </div>
         </div>
@@ -91,161 +111,51 @@ import { AuthService } from '../../../core/auth/auth.service';
     </div>
   `,
   styles: [`
-    .detail-container {
-      max-width: 700px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    .detail {
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: var(--space-6);
+      padding: var(--space-6);
+      align-items: start;
     }
-    .loading-text {
-      text-align: center;
-      color: #64748b;
-      margin-top: 3rem;
+    .detail__cover { display: flex; justify-content: center; }
+    .detail__heading { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+    .detail__author { font-size: var(--text-lg); color: var(--color-ink-soft); }
+    .detail__facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--space-4);
+      margin: var(--space-5) 0;
+      padding: var(--space-4) 0;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
     }
-    .not-found-card {
-      text-align: center;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 3rem 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    .detail__facts dt {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-ink-faint);
     }
-    .not-found-card h2 {
-      color: #dc2626;
-      margin-bottom: 0.5rem;
-    }
-    .not-found-card p {
-      color: #64748b;
-      margin-bottom: 1.5rem;
-    }
-    .card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-    }
-    .card-header {
-      padding: 1.5rem;
-      background: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card-header h2 {
-      margin: 0;
-      font-size: 1.5rem;
-      color: #1e293b;
-    }
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.6rem;
-      background: #e0f2fe;
-      color: #0369a1;
-      border-radius: 4px;
-      font-weight: 500;
-      font-size: 0.85rem;
-    }
-    .card-body {
-      padding: 1.5rem;
-    }
-    .detail-row {
-      display: flex;
-      margin-bottom: 1rem;
-      align-items: baseline;
-    }
-    .description-row {
-      flex-direction: column;
-      align-items: flex-start;
-      margin-top: 1.5rem;
-    }
-    .description-text {
-      background: #f8fafc;
-      padding: 1rem;
-      border-radius: 6px;
-      width: 100%;
-      margin-top: 0.5rem;
-      line-height: 1.5;
-    }
-    .label {
-      width: 160px;
-      font-weight: 600;
-      color: #475569;
-    }
-    .value {
-      color: #1e293b;
-      flex: 1;
-    }
-    .metadata-row {
-      margin-top: 2rem;
-      padding-top: 1rem;
-      border-top: 1px solid #f1f5f9;
-      color: #94a3b8;
-    }
-    .card-footer {
-      padding: 1.25rem 1.5rem;
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .admin-actions {
-      display: flex;
-      gap: 0.75rem;
-    }
-    .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      border: 1px solid transparent;
-      font-size: 0.9rem;
-    }
-    .btn-primary {
-      background: #2563eb;
-      color: #ffffff;
-    }
-    .btn-secondary {
-      background: #64748b;
-      color: #ffffff;
-    }
-    .btn-danger {
-      background: #dc2626;
-      color: #ffffff;
-    }
-    .btn-outline {
-      background: #ffffff;
-      border-color: #cbd5e1;
-      color: #475569;
-    }
+    .detail__facts dd { font-weight: 600; color: var(--color-ink); }
+    .detail__isbn { font-variant-numeric: tabular-nums; }
+    .detail__description h2 { font-size: var(--text-lg); margin-bottom: var(--space-2); }
+    .detail__description p { max-width: 70ch; }
+    .detail__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+    .not-found__action { text-align: center; padding-bottom: var(--space-5); }
     .modal-backdrop {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+      inset: 0;
+      background: rgba(23, 32, 51, 0.55);
+      display: grid;
+      place-items: center;
+      padding: var(--space-4);
+      z-index: 50;
     }
-    .modal-dialog {
-      background: #ffffff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      max-width: 450px;
-      width: 90%;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
+    .modal { width: min(100%, 460px); }
+    .modal__actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+    @media (max-width: 720px) {
+      .detail { grid-template-columns: 1fr; padding: var(--space-4); gap: var(--space-4); }
+      .detail__cover { justify-content: flex-start; }
     }
   `]
 })

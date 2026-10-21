@@ -36,6 +36,19 @@
 - [x] Releases: `v1.0.0` (primera versión) y `v1.0.1` (primer despliegue automático correcto).
 - [x] Demo de extremo a extremo verificada contra la app desplegada.
 
+## UI rediseñada (2026-10-21, feat-011)
+- Sistema de diseño en `frontend/src/styles.css`: tokens en `:root` (color, tipografía, espaciado, radios, sombras)
+  y clases base `.btn`, `.field`, `.card`, `.table`, `.alert`, `.badge`, `.state`. Paleta editorial verde/latón.
+- Componentes compartidos nuevos: `shared/book-cover` (portada por ISBN de Open Library con marcador local) y
+  `shared/state` (carga, vacío y error).
+- Portadas integradas en catálogo, detalle y formulario (vista previa solo con ISBN de 10/13 dígitos).
+- Inicio nuevo con `public/library-hero.svg`, estado de la API y accesos por rol.
+- Vistas de auth, perfil, usuarios y navegación rediseñadas; `LOCALE_ID` en `es` para fechas en español.
+- Revisión visual de las 8 vistas a 1280 px y 390 px con Chromium headless (capturas en `/tmp/opencode/shots`):
+  sin scroll horizontal (`scrollWidth === clientWidth`), 0 imágenes sin `alt`, 0 campos sin `label`,
+  avisos con `role="alert"`/`aria-live` y foco visible global (`:focus-visible`).
+- Tests: 123 en verde (14 nuevos) y cobertura 99,6 % statements / 90,9 % branches.
+
 ## What's In Progress (en curso)
 - [x] Ninguna tarea pendiente: todos los checklists de las dos máquinas están completos.
 
