@@ -53,7 +53,7 @@ Before writing code / antes de escribir código:
 ## Trabajo en dos máquinas
 - **Identidad**: `.harness-owner` (ignorado por git) contiene `dev-a` o `dev-b`. `./init.sh` no corre sin él.
 - **Ramas (Git Flow)**: `main` = producción (cada merge despliega), `develop` = integración, una rama
-  `feature/<openspec-change>` por cambio (sale de `develop` y vuelve a `develop` por Pull Request con el CI en verde),
+  `feature/<feat-id>-<change-name>` por cambio (sale de `develop` y vuelve a `develop` por Pull Request con el CI en verde),
   `release/<versión>` para entregar a `main` y `hotfix/<descripción>` solo para urgencias en producción.
   Nunca hagas commit directo a `main` ni a `develop`. Ejecuta `/sync` antes de empezar y antes de abrir un PR.
 - **Dueños de archivos**: respeta la tabla de `docs/PRODUCT.md` sección 9. Los archivos compartidos (`app/main.py`,
@@ -143,3 +143,4 @@ Before ending (antes de terminar una sesión, o ejecuta `/handoff`):
 - Angular CLI exige Node 24 LTS (o 22.22.3+). Si `ng` falla por la versión de Node, avísalo; no cambies de framework.
 - En las specs usa SHALL/MUST en inglés dentro del texto en español; con "DEBE" OpenSpec no reconoce el requisito.
 <!-- Agrega una línea por cada error que el agente repita. -->
+- Ramas: feature/<feat-id>-<change-name> (ej.: feature/feat-007-add-book-management), para trazabilidad con feature_list.json.

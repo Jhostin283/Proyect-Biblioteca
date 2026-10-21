@@ -1,5 +1,8 @@
 # library-g2 · Sistema de Gestión de Libros (Grupo 2)
 
+[![CI](https://github.com/Jhostin283/Proyect-Biblioteca/actions/workflows/ci.yml/badge.svg)](https://github.com/Jhostin283/Proyect-Biblioteca/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Jhostin283/Proyect-Biblioteca/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jhostin283/Proyect-Biblioteca/actions/workflows/deploy.yml)
+
 Aplicación full-stack (FastAPI + Angular + PostgreSQL) con dos módulos, **Autenticación y Autorización (dev-a)** y
 **Gestión de Libros (dev-b)**, construida por dos desarrolladores, cada uno con un agente de IA (opencode) en su propia máquina, dentro de un harness común, con desarrollo guiado por specs (OpenSpec),
 infraestructura como código (Terraform) y despliegue en AWS EC2.
