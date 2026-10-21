@@ -6,9 +6,9 @@
       "description": "[RNF-08] Esqueletos de FastAPI y Angular siguiendo el contrato de AGENTS.md, con GET /api/health visible en la página de inicio y una barra de navegación. Ejecutar /scaffold.",
       "owner": "dev-b",
       "dependencies": [],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "bootstrap-project",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (pytest 2 passed, ruff OK, ng build OK)"
     },
     {
       "id": "feat-006",
@@ -29,9 +29,9 @@
         "feat-001",
         "feat-006"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "setup-continuous-deployment",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (workflows ci.yml y deploy.yml configurados y activos, badges en README.md)"
     },
     {
       "id": "feat-002",
@@ -41,9 +41,9 @@
       "dependencies": [
         "feat-001"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "define-domain-contract",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (tablas users y books, alembic head 0001, lazy routes, auth_as fixture, pytest OK)"
     },
     {
       "id": "feat-003",
@@ -53,21 +53,21 @@
       "dependencies": [
         "feat-002"
       ],
-      "status": "not-started",
-      "openspec_change": "add-user-authentication",
-      "evidence": ""
+      "status": "done",
+    "openspec_change": "add-user-authentication",
+    "evidence": "Tareas 1.1-6.3 completadas (tasks.md 21/21): uv run pytest -q -> 33 passed (test_auth 16, test_auth_service 8, test_security 7, test_health 2); ./scripts/check.sh --full -> CHECK OK con SMOKE OK (health, SPA, fallback); npx ng build -> OK; en vivo en http://localhost:8080: login admin@library.local -> 200, GET /api/auth/me -> 200 con role admin, register dominio .local -> 201, email malformado -> 422. D10: EmailField acepta special-use (.local) del contrato; ruff check/format limpio. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-user-authentication; specs de authentication sincronizados."
     },
     {
       "id": "feat-004",
       "name": "Autorización por roles",
-      "description": "[RF-05, RF-06] Implementación real de get_current_user y require_roles (401/403); en Angular: AuthService, authInterceptor, authGuard, roleGuard y cierre de sesión en la barra de navegación.",
+      "description": "[RF-05, RF-06] Autorización por roles en la API (401/403 en rutas protegidas) y en Angular: authGuard, roleGuard, sesión persistente al recargar y cierre de sesión en la barra de navegación.",
       "owner": "dev-a",
       "dependencies": [
         "feat-003"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-role-authorization",
-      "evidence": ""
+      "evidence": "Tareas 1.1-4.3 completadas (18/18): uv run pytest -q -> 77 passed (18 en test_authorization.py); ruff check/format limpio; npx ng build OK; ./scripts/check.sh -> CHECK OK; ./scripts/check.sh --full -> CHECK OK + SMOKE OK. Comprobación UI en Chromium headless: sin sesión /books->/login; login admin y recarga con sesión persistente; reader en /users y /books/new -> /books con 'No tienes permiso para esta acción'; logout -> /login y token eliminado; botón atrás -> /login; token alterado durante el uso -> 'Tu sesión expiró'; API en vivo admin GET /api/users 200, reader 403, books sin token 401. Bug corregido: isAuthenticated con cortocircuito no reactivo y ProfileComponent borraba el aviso del interceptor. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-role-authorization; spec authorization sincronizada."
     },
     {
       "id": "feat-005",
@@ -77,9 +77,9 @@
       "dependencies": [
         "feat-004"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-user-administration",
-      "evidence": ""
+      "evidence": "Tareas 1.1-4.3 completadas (13/13): uv run pytest -q -> 88 passed (11 en test_users.py); ruff check/format limpio; npx ng build OK; ./scripts/check.sh -> CHECK OK; ./scripts/check.sh --full -> CHECK OK + SMOKE OK (reintento tras timeout de ghcr). UI en Chromium: listado paginado, búsqueda por nombre/email, rol reader->librarian con 'Rol actualizado', desactivar/reactivar, auto-desactivación 409 con interruptor revertido. Bug corregido: <select> con [value] mostraba Lector en filas nuevas; ahora usa [selected]. Archivado el 2026-10-20 en openspec/changes/archive/2026-10-20-add-user-administration; spec user-administration sincronizada."
     },
     {
       "id": "feat-007",
@@ -89,9 +89,9 @@
       "dependencies": [
         "feat-002"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-book-management",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (18 backend tests passed en pytest, Angular build OK, ISBN único 409, validación año 422, created_by por token, roles librarian/admin)"
     },
     {
       "id": "feat-008",
@@ -101,9 +101,9 @@
       "dependencies": [
         "feat-007"
       ],
-      "status": "not-started",
+      "status": "done",
       "openspec_change": "add-book-search",
-      "evidence": ""
+      "evidence": "./scripts/check.sh -> CHECK OK (28 backend tests en pytest, Angular build OK, paginación {items, total, page, size}, búsqueda ilike título/autor, filtro género, géneros alfabéticos)"
     },
     {
       "id": "feat-010",

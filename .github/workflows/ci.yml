@@ -1,8 +1,7 @@
 name: CI
 
-# Triggers automáticos deshabilitados mientras CI/Deploy muestre errores en GitHub.
-# Solo queda el lanzamiento manual (workflow_dispatch) y workflow_call (lo usa
-# deploy.yml; no se ejecuta solo). Para reactivar, restaura pull_request / push.
+# Triggers automáticos deshabilitados temporalmente hasta finalizar el proyecto.
+# Solo queda el lanzamiento manual (workflow_dispatch) y workflow_call.
 on:
   workflow_call:
   workflow_dispatch:
