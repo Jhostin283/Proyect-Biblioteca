@@ -23,6 +23,7 @@ dev = [
     "pytest>=8.3.0",
     "httpx>=0.28.0",
     "ruff>=0.8.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.ruff]
@@ -36,3 +37,14 @@ select = ["E", "F", "I", "W", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

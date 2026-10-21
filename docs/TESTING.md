@@ -77,8 +77,16 @@ Ejecutar: `cd backend && uv run pytest -q`
 
 ## Frontend
 - Sensor obligatorio: `npx ng build` sin errores (detecta tipos, plantillas e imports rotos).
-- Los tests unitarios (Vitest vía Angular CLI) son opcionales si falta tiempo. Si los agregas, expón un script
-  `"test:ci"` en `package.json` y `scripts/check.sh` lo ejecutará solo.
+- Tests unitarios con **Karma + Jasmine** (`frontend/karma.conf.js`); cada `*.spec.ts` vive junto al archivo que prueba.
+  Como `package.json` expone `"test:ci"`, `scripts/check.sh` lo ejecuta solo.
+- Cobertura obligatoria: `npm run test:ci` genera `frontend/coverage/` y falla si alguna métrica global
+  (statements, branches, functions, lines) baja del 80 % (umbral en `karma.conf.js`).
+
+## Cobertura (umbral 80 %)
+- Backend: `cd backend && uv run pytest --cov --cov-fail-under=80` → informe en `backend/coverage.xml` y `backend/htmlcov/`.
+- Frontend: `cd frontend && npm run test:ci` → informe en `frontend/coverage/`.
+- El workflow `.github/workflows/ci.yml` publica dos artefactos descargables: `coverage-backend` y `coverage-frontend`.
+- `deploy.yml` reutiliza ese workflow como job `check`, así que el despliegue no arranca si la cobertura baja del 80 %.
 
 ## Integración real
 `./scripts/check.sh --full` levanta `docker compose` con PostgreSQL, aplica las migraciones al arrancar el backend
