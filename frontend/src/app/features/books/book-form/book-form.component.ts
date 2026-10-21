@@ -2,207 +2,185 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
 import { BookService } from '../../../core/books/book.service';
+import { BookCoverComponent } from '../../../shared/book-cover/book-cover.component';
 
 @Component({
   selector: 'app-book-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, BookCoverComponent],
   template: `
-    <div class="form-container">
-      <div class="header">
-        <h2>{{ isEditMode() ? 'Editar Libro' : 'Nuevo Libro' }}</h2>
-        <a routerLink="/books" class="btn-secondary">Volver al catálogo</a>
-      </div>
+    <div class="page page--narrow">
+      <header class="page__header">
+        <div class="page__title">
+          <span class="page__eyebrow">{{ isEditMode() ? 'Editar' : 'Nuevo' }}</span>
+          <h1>{{ isEditMode() ? 'Editar libro' : 'Registrar un libro' }}</h1>
+          <p class="page__subtitle">
+            Los campos con * son obligatorios. La portada se toma de Open Library a partir del ISBN.
+          </p>
+        </div>
+        <a routerLink="/books" class="btn btn--secondary">&larr; Volver al catálogo</a>
+      </header>
 
-      <div *ngIf="errorMessage()" class="alert alert-danger">
-        {{ errorMessage() }}
-      </div>
+      @if (errorMessage()) {
+        <p class="alert alert--error" role="alert">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="alert alert--success" role="status">{{ successMessage() }}</p>
+      }
 
-      <div *ngIf="successMessage()" class="alert alert-success">
-        {{ successMessage() }}
-      </div>
-
-      <form [formGroup]="bookForm" (ngSubmit)="onSubmit()" class="form-card">
-        <div class="form-group">
-          <label for="isbn">ISBN *</label>
-          <input
-            id="isbn"
-            type="text"
-            formControlName="isbn"
-            placeholder="Ej: 9786073112878 (10 o 13 dígitos)"
-          />
-          <div *ngIf="isbnError" class="field-error">
-            {{ isbnError }}
+      <form [formGroup]="bookForm" (ngSubmit)="onSubmit()" class="form-layout" novalidate>
+        <aside class="preview card" aria-label="Vista previa de la portada">
+          <div class="preview__cover">
+            @if (isbnForPreview) {
+              <app-book-cover
+                [isbn]="isbnForPreview"
+                [title]="previewTitle"
+                [author]="bookForm.value.author || ''"
+                size="lg"
+                [lazy]="false"
+              />
+            } @else {
+              <div class="preview__empty" aria-hidden="true">?</div>
+            }
           </div>
-        </div>
+          <p class="preview__hint">
+            @if (isbnForPreview) {
+              Vista previa de la portada para el ISBN {{ isbnForPreview }}.
+            } @else {
+              Escribe un ISBN de 10 o 13 dígitos para ver la portada.
+            }
+          </p>
+        </aside>
 
-        <div class="form-group">
-          <label for="title">Título *</label>
-          <input id="title" type="text" formControlName="title" placeholder="Título del libro" />
-          <div *ngIf="titleError" class="field-error">
-            El título es obligatorio.
+        <div class="form-card card">
+          <div class="form-grid card__body">
+            <div class="field">
+              <label for="isbn">ISBN *</label>
+              <input
+                id="isbn"
+                type="text"
+                formControlName="isbn"
+                inputmode="numeric"
+                placeholder="Ej.: 9786073112878 (10 o 13 dígitos)"
+              />
+              @if (isbnError) {
+                <span class="field__error">{{ isbnError }}</span>
+              }
+            </div>
+
+            <div class="field">
+              <label for="title">Título *</label>
+              <input id="title" type="text" formControlName="title" placeholder="Título del libro" />
+              @if (titleError) {
+                <span class="field__error">El título es obligatorio.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label for="author">Autor *</label>
+              <input id="author" type="text" formControlName="author" placeholder="Autor del libro" />
+              @if (authorError) {
+                <span class="field__error">El autor es obligatorio.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label for="genre">Género *</label>
+              <input id="genre" type="text" formControlName="genre" placeholder="Ej.: Novela, Ficción" />
+              @if (genreError) {
+                <span class="field__error">El género es obligatorio.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label for="publication_year">Año de publicación *</label>
+              <input
+                id="publication_year"
+                type="number"
+                formControlName="publication_year"
+                placeholder="Ej.: 1967"
+              />
+              @if (yearError) {
+                <span class="field__error">{{ yearError }}</span>
+              }
+            </div>
+
+            <div class="field field--wide">
+              <label for="description">Descripción</label>
+              <textarea
+                id="description"
+                rows="4"
+                formControlName="description"
+                placeholder="Sinopsis o descripción opcional"
+              ></textarea>
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="author">Autor *</label>
-          <input id="author" type="text" formControlName="author" placeholder="Autor del libro" />
-          <div *ngIf="authorError" class="field-error">
-            El autor es obligatorio.
+          <div class="card__footer form-actions">
+            <button type="submit" [disabled]="bookForm.invalid || isSubmitting()" class="btn">
+              {{
+                isSubmitting()
+                  ? 'Guardando…'
+                  : (isEditMode() ? 'Actualizar libro' : 'Registrar libro')
+              }}
+            </button>
+            @if (isEditMode()) {
+              <button type="button" (click)="onDelete()" class="btn btn--danger">
+                Eliminar libro
+              </button>
+            }
           </div>
-        </div>
-
-        <div class="form-group">
-          <label for="genre">Género *</label>
-          <input id="genre" type="text" formControlName="genre" placeholder="Ej: Novela, Ficción" />
-          <div *ngIf="genreError" class="field-error">
-            El género es obligatorio.
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="publication_year">Año de publicación *</label>
-          <input
-            id="publication_year"
-            type="number"
-            formControlName="publication_year"
-            placeholder="Ej: 1967"
-          />
-          <div *ngIf="yearError" class="field-error">
-            {{ yearError }}
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="description">Descripción</label>
-          <textarea
-            id="description"
-            rows="4"
-            formControlName="description"
-            placeholder="Sinopsis o descripción opcional"
-          ></textarea>
-        </div>
-
-        <div class="actions">
-          <button type="submit" [disabled]="bookForm.invalid || isSubmitting()" class="btn-primary">
-            {{ isSubmitting() ? 'Guardando...' : (isEditMode() ? 'Actualizar libro' : 'Registrar libro') }}
-          </button>
-
-          <button
-            *ngIf="isEditMode()"
-            type="button"
-            (click)="onDelete()"
-            class="btn-danger"
-          >
-            Eliminar libro
-          </button>
         </div>
       </form>
     </div>
   `,
   styles: [`
-    .form-container {
-      max-width: 650px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    .form-layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: var(--space-5);
+      align-items: start;
     }
-    .header {
+    .preview {
+      position: sticky;
+      top: var(--space-5);
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      margin-bottom: 1.5rem;
+      gap: var(--space-3);
+      padding: var(--space-5) var(--space-4);
     }
-    .form-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+    .preview__cover { display: flex; justify-content: center; }
+    .preview__empty {
+      width: 160px;
+      aspect-ratio: 2 / 3;
+      display: grid;
+      place-items: center;
       border-radius: 8px;
-      padding: 2rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px dashed var(--color-border-strong);
+      background: var(--color-surface-alt);
+      color: var(--color-ink-faint);
+      font-family: var(--font-display);
+      font-size: 2rem;
     }
-    .form-group {
-      margin-bottom: 1.25rem;
+    .preview__hint { font-size: var(--text-xs); text-align: center; color: var(--color-ink-faint); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-4);
     }
-    label {
-      display: block;
-      margin-bottom: 0.35rem;
-      font-weight: 500;
-      color: #334155;
+    .field--wide { grid-column: 1 / -1; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; }
+    .alert { margin-bottom: var(--space-4); }
+    @media (max-width: 860px) {
+      .form-layout { grid-template-columns: 1fr; }
+      .preview { position: static; }
     }
-    input, textarea {
-      width: 100%;
-      padding: 0.6rem 0.75rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-family: inherit;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-    }
-    .field-error {
-      color: #dc2626;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-    }
-    .alert {
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-    }
-    .alert-danger {
-      background-color: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
-    }
-    .alert-success {
-      background-color: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      color: #166534;
-    }
-    .actions {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-    button {
-      padding: 0.6rem 1.25rem;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 500;
-      border: none;
-      transition: background-color 0.15s ease;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .btn-primary {
-      background-color: #2563eb;
-      color: #ffffff;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-    .btn-danger {
-      background-color: #dc2626;
-      color: #ffffff;
-    }
-    .btn-danger:hover {
-      background-color: #b91c1c;
-    }
-    .btn-secondary {
-      color: #475569;
-      padding: 0.4rem 0.8rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      text-decoration: none;
-    }
-    .btn-secondary:hover {
-      background-color: #f1f5f9;
-      text-decoration: none;
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-actions .btn { width: 100%; }
     }
   `]
 })
@@ -265,6 +243,16 @@ export class BookFormComponent implements OnInit {
       }
     }
     return null;
+  }
+
+  /** ISBN normalizado solo si tiene 10 o 13 dígitos; si no, no se pide portada. */
+  get isbnForPreview(): string {
+    const value = String(this.bookForm.get('isbn')?.value ?? '').replace(/[^0-9Xx]/g, '');
+    return value.length === 10 || value.length === 13 ? value : '';
+  }
+
+  get previewTitle(): string {
+    return String(this.bookForm.get('title')?.value || 'Vista previa');
   }
 
   isbnValidator(control: { value: string | null }) {

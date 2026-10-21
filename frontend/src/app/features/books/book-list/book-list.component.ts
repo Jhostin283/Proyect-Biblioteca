@@ -1,161 +1,168 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { Book, BookService } from '../../../core/books/book.service';
+import { RouterLink } from '@angular/router';
+
 import { AuthService } from '../../../core/auth/auth.service';
+import { Book, BookService } from '../../../core/books/book.service';
+import { BookCoverComponent } from '../../../shared/book-cover/book-cover.component';
+import { StateComponent } from '../../../shared/state/state.component';
 
 @Component({
   selector: 'app-book-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, BookCoverComponent, StateComponent],
   template: `
-    <div class="catalog-container">
-      <div class="header-section">
-        <h2>Catálogo de Libros</h2>
+    <div class="page">
+      <header class="page__header">
+        <div class="page__title">
+          <span class="page__eyebrow">Catálogo</span>
+          <h1>Biblioteca</h1>
+          <p class="page__subtitle">
+            {{ totalBooks() }} {{ totalBooks() === 1 ? 'libro' : 'libros' }} en el catálogo.
+            Busca por título o autor y filtra por género.
+          </p>
+        </div>
         @if (canManageBooks()) {
-          <a routerLink="/books/new" class="btn btn-primary" id="btn-new-book">
-            + Nuevo libro
-          </a>
+          <a routerLink="/books/new" class="btn" id="btn-new-book">+ Nuevo libro</a>
         }
-      </div>
+      </header>
 
-      <!-- Barra de Filtros -->
-      <div class="filters-card">
-        <div class="filter-group">
-          <label for="search-input">Buscar por título o autor:</label>
-          <input
-            id="search-input"
-            type="text"
-            [(ngModel)]="searchQuery"
-            (keyup.enter)="applyFilters()"
-            placeholder="Ej: García Márquez..."
-            class="form-control"
-          />
-        </div>
+      <section class="filters card" aria-label="Filtros del catálogo">
+        <div class="filters__grid">
+          <div class="field">
+            <label for="search-input">Buscar por título o autor</label>
+            <input
+              id="search-input"
+              type="search"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="applyFilters()"
+              placeholder="Ej.: García Márquez"
+            />
+          </div>
 
-        <div class="filter-group">
-          <label for="genre-select">Filtrar por género:</label>
-          <select
-            id="genre-select"
-            [(ngModel)]="selectedGenre"
-            (change)="applyFilters()"
-            class="form-control"
-          >
-            <option value="">Todos los géneros</option>
-            @for (genre of genres(); track genre) {
-              <option [value]="genre">{{ genre }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="filter-actions">
-          <button (click)="applyFilters()" class="btn btn-secondary" id="btn-search">
-            Buscar
-          </button>
-          <button (click)="resetFilters()" class="btn btn-outline" id="btn-reset">
-            Limpiar
-          </button>
-        </div>
-      </div>
-
-      <!-- Mensajes -->
-      @if (errorMessage()) {
-        <div class="alert alert-error">{{ errorMessage() }}</div>
-      }
-
-      @if (successMessage()) {
-        <div class="alert alert-success">{{ successMessage() }}</div>
-      }
-
-      <!-- Listado de Libros -->
-      @if (loading()) {
-        <p class="loading-text">Cargando catálogo de libros...</p>
-      } @else if (books().length === 0) {
-        <div class="empty-state">
-          <p>No se encontraron libros</p>
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="books-table">
-            <thead>
-              <tr>
-                <th>Título</th>
-                <th>Autor</th>
-                <th>Género</th>
-                <th>Año</th>
-                <th>ISBN</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (book of books(); track book.id) {
-                <tr>
-                  <td>
-                    <a [routerLink]="['/books', book.id]" class="book-title-link">
-                      <strong>{{ book.title }}</strong>
-                    </a>
-                  </td>
-                  <td>{{ book.author }}</td>
-                  <td>
-                    <span class="badge">{{ book.genre }}</span>
-                  </td>
-                  <td>{{ book.publication_year }}</td>
-                  <td>{{ book.isbn }}</td>
-                  <td class="actions-cell">
-                    <a [routerLink]="['/books', book.id]" class="btn btn-sm btn-info">
-                      Ver detalle
-                    </a>
-                    @if (canManageBooks()) {
-                      <a [routerLink]="['/books', book.id, 'edit']" class="btn btn-sm btn-secondary">
-                        Editar
-                      </a>
-                      <button (click)="confirmDelete(book)" class="btn btn-sm btn-danger">
-                        Eliminar
-                      </button>
-                    }
-                  </td>
-                </tr>
+          <div class="field">
+            <label for="genre-select">Género</label>
+            <select id="genre-select" [(ngModel)]="selectedGenre" (change)="applyFilters()">
+              <option value="">Todos los géneros</option>
+              @for (genre of genres(); track genre) {
+                <option [value]="genre">{{ genre }}</option>
               }
-            </tbody>
-          </table>
+            </select>
+          </div>
+
+          <div class="filters__actions">
+            <button type="button" (click)="applyFilters()" class="btn" id="btn-search">Buscar</button>
+            <button type="button" (click)="resetFilters()" class="btn btn--secondary" id="btn-reset">
+              Limpiar
+            </button>
+          </div>
         </div>
+      </section>
 
-        <!-- Paginación -->
-        <div class="pagination-bar">
-          <span class="pagination-info">
-            Página {{ currentPage() }} de {{ totalPages() }} ({{ totalBooks() }} libros en total)
+      @if (errorMessage()) {
+        <p class="alert alert--error" role="alert">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="alert alert--success" role="status">{{ successMessage() }}</p>
+      }
+
+      @if (loading()) {
+        <app-state variant="loading" title="Cargando el catálogo…" />
+      } @else if (books().length === 0) {
+        <app-state
+          variant="empty"
+          title="No hay libros que mostrar"
+          message="Prueba con otra búsqueda o cambia el filtro de género."
+        />
+        @if (canManageBooks()) {
+          <p class="empty-action">
+            <a routerLink="/books/new" class="btn btn--secondary">Registrar el primer libro</a>
+          </p>
+        }
+      } @else {
+        <ul class="catalog-grid">
+          @for (book of books(); track book.id) {
+            <li class="book-card card">
+              <a
+                class="book-card__cover"
+                [routerLink]="['/books', book.id]"
+                [attr.aria-label]="'Ver el detalle de ' + book.title"
+              >
+                <app-book-cover
+                  [isbn]="book.isbn"
+                  [title]="book.title"
+                  [author]="book.author"
+                  size="md"
+                />
+              </a>
+
+              <div class="book-card__body">
+                <span class="badge">{{ book.genre }}</span>
+                <h2 class="book-card__title">
+                  <a [routerLink]="['/books', book.id]">{{ book.title }}</a>
+                </h2>
+                <p class="book-card__author">{{ book.author }} · {{ book.publication_year }}</p>
+                <p class="book-card__isbn muted">{{ book.isbn }}</p>
+
+                <div class="book-card__actions">
+                  <a class="btn btn--sm btn--secondary" [routerLink]="['/books', book.id]">Detalle</a>
+                  @if (canManageBooks()) {
+                    <a class="btn btn--sm btn--ghost" [routerLink]="['/books', book.id, 'edit']">
+                      Editar
+                    </a>
+                    <button type="button" class="btn btn--sm btn--danger" (click)="confirmDelete(book)">
+                      Eliminar
+                    </button>
+                  }
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <nav class="pagination" aria-label="Paginación del catálogo">
+          <span class="muted">
+            Página {{ currentPage() }} de {{ totalPages() }} · {{ totalBooks() }} libros
           </span>
-
-          <div class="pagination-controls">
+          <div class="row">
             <button
+              type="button"
+              class="btn btn--sm btn--secondary"
               (click)="goToPage(currentPage() - 1)"
               [disabled]="currentPage() <= 1"
-              class="btn btn-sm btn-outline"
             >
               &laquo; Anterior
             </button>
             <button
+              type="button"
+              class="btn btn--sm btn--secondary"
               (click)="goToPage(currentPage() + 1)"
               [disabled]="currentPage() >= totalPages()"
-              class="btn btn-sm btn-outline"
             >
               Siguiente &raquo;
             </button>
           </div>
-        </div>
+        </nav>
       }
 
-      <!-- Modal de Confirmación de Eliminación -->
       @if (bookToDelete()) {
-        <div class="modal-backdrop">
-          <div class="modal-dialog">
-            <h3>Confirmar eliminación</h3>
-            <p>¿Seguro que quieres eliminar este libro?</p>
-            <p><strong>"{{ bookToDelete()?.title }}"</strong> de {{ bookToDelete()?.author }}</p>
-            <div class="modal-actions">
-              <button (click)="cancelDelete()" class="btn btn-outline">Cancelar</button>
-              <button (click)="executeDelete()" class="btn btn-danger">Sí, eliminar</button>
+        <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+          <div class="modal card">
+            <div class="card__body">
+              <h2 id="delete-title">Confirmar eliminación</h2>
+              <p>
+                ¿Seguro que quieres eliminar
+                <strong>{{ bookToDelete()?.title }}</strong> de {{ bookToDelete()?.author }}?
+              </p>
+            </div>
+            <div class="card__footer modal__actions">
+              <button type="button" class="btn btn--secondary" (click)="cancelDelete()">
+                Cancelar
+              </button>
+              <button type="button" class="btn btn--danger" (click)="executeDelete()">
+                Sí, eliminar
+              </button>
             </div>
           </div>
         </div>
@@ -163,196 +170,57 @@ import { AuthService } from '../../../core/auth/auth.service';
     </div>
   `,
   styles: [`
-    .catalog-container {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    .filters { margin-bottom: var(--space-5); }
+    .filters__grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+      gap: var(--space-4);
+      align-items: end;
+      padding: var(--space-5);
     }
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
+    .filters__actions { display: flex; gap: var(--space-2); }
+    .alert { margin-bottom: var(--space-4); }
+    .empty-action { text-align: center; margin-top: calc(-1 * var(--space-5)); }
+    .catalog-grid {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: var(--space-4);
     }
-    .filters-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 1.25rem;
+    .book-card { display: flex; gap: var(--space-4); padding: var(--space-4); align-items: flex-start; }
+    .book-card__cover { flex: 0 0 auto; display: block; border-radius: var(--radius-sm); }
+    .book-card__body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+    .book-card__title { font-size: var(--text-lg); line-height: 1.25; }
+    .book-card__title a { color: var(--color-ink); }
+    .book-card__author { font-size: var(--text-sm); color: var(--color-ink-soft); }
+    .book-card__isbn { font-variant-numeric: tabular-nums; }
+    .book-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: auto; padding-top: var(--space-2); }
+    .pagination {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
-      align-items: flex-end;
-      margin-bottom: 1.5rem;
-    }
-    .filter-group {
-      flex: 1;
-      min-width: 200px;
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-    .filter-group label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #334155;
-    }
-    .form-control {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
-    .filter-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .table-responsive {
-      overflow-x: auto;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-    .books-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-    .books-table th {
-      background: #f1f5f9;
-      padding: 0.75rem 1rem;
-      font-weight: 600;
-      color: #1e293b;
-      border-bottom: 2px solid #e2e8f0;
-    }
-    .books-table td {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid #e2e8f0;
-      color: #334155;
-    }
-    .book-title-link {
-      color: #2563eb;
-      text-decoration: none;
-    }
-    .book-title-link:hover {
-      text-decoration: underline;
-    }
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.5rem;
-      background: #e0f2fe;
-      color: #0369a1;
-      border-radius: 4px;
-      font-size: 0.85rem;
-    }
-    .actions-cell {
-      display: flex;
-      gap: 0.4rem;
-      align-items: center;
-    }
-    .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      border: 1px solid transparent;
-      font-size: 0.9rem;
-    }
-    .btn-sm {
-      padding: 0.3rem 0.6rem;
-      font-size: 0.825rem;
-    }
-    .btn-primary {
-      background: #2563eb;
-      color: #ffffff;
-    }
-    .btn-secondary {
-      background: #64748b;
-      color: #ffffff;
-    }
-    .btn-info {
-      background: #0284c7;
-      color: #ffffff;
-    }
-    .btn-danger {
-      background: #dc2626;
-      color: #ffffff;
-    }
-    .btn-outline {
-      background: #ffffff;
-      border-color: #cbd5e1;
-      color: #475569;
-    }
-    .btn-outline:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .pagination-bar {
-      display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 1rem;
-      padding: 0.5rem 0;
-    }
-    .pagination-info {
-      font-size: 0.9rem;
-      color: #64748b;
-    }
-    .pagination-controls {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      background: #f8fafc;
-      border: 1px dashed #cbd5e1;
-      border-radius: 8px;
-      color: #64748b;
-      font-size: 1.1rem;
-    }
-    .alert {
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-    }
-    .alert-error {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #fca5a5;
-    }
-    .alert-success {
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #86efac;
+      gap: var(--space-4);
+      margin-top: var(--space-5);
     }
     .modal-backdrop {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+      inset: 0;
+      background: rgba(23, 32, 51, 0.55);
+      display: grid;
+      place-items: center;
+      padding: var(--space-4);
+      z-index: 50;
     }
-    .modal-dialog {
-      background: #ffffff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      max-width: 450px;
-      width: 90%;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    .modal { width: min(100%, 460px); }
+    .modal__actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+    @media (max-width: 860px) {
+      .filters__grid { grid-template-columns: 1fr; }
+      .filters__actions { justify-content: stretch; }
+      .filters__actions .btn { flex: 1; }
     }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
+    @media (max-width: 520px) {
+      .book-card { flex-direction: column; }
     }
   `]
 })

@@ -1,10 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthService, UserProfile } from '../../../core/auth/auth.service';
 import { Book, BookService, PaginatedBooks } from '../../../core/books/book.service';
+import { BookCoverComponent } from '../../../shared/book-cover/book-cover.component';
 import { BookListComponent } from './book-list.component';
 
 const book: Book = {
@@ -80,6 +82,16 @@ describe('BookListComponent', () => {
     expect(component.totalBooks()).toBe(25);
     expect(component.genres()).toEqual(['Novela', 'Poesía']);
     expect(component.totalPages()).toBe(3);
+  });
+
+  it('pinta una portada por libro con su ISBN', () => {
+    setup();
+    fixture.detectChanges();
+
+    const covers = fixture.debugElement.queryAll(By.directive(BookCoverComponent));
+    expect(covers.length).toBe(1);
+    expect(covers[0].componentInstance.isbn()).toBe('9780306406157');
+    expect(covers[0].componentInstance.title()).toBe('El Quijote');
   });
 
   it('muestra el detalle del error al cargar libros', () => {
