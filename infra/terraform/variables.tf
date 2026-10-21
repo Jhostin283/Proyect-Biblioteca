@@ -31,3 +31,14 @@ variable "admin_cidr" {
     error_message = "admin_cidr no es una dirección IPv4 válida."
   }
 }
+
+variable "github_repository" {
+  description = "Repositorio de GitHub (owner/nombre) autorizado a asumir el rol de despliegue por OIDC. Ej.: Jhostin283/Proyect-Biblioteca"
+  type        = string
+  default     = "Jhostin283/Proyect-Biblioteca"
+
+  validation {
+    condition     = can(regex("^[^/]+/[^/]+$", var.github_repository))
+    error_message = "github_repository debe tener el formato owner/nombre, por ejemplo Jhostin283/Proyect-Biblioteca."
+  }
+}
