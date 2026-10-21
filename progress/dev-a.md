@@ -1,8 +1,8 @@
 # Progreso — dev-a (Autenticación y Autorización + Terraform)
 
 ## Current State (estado actual)
-**Last Updated (última actualización):** 2026-10-21 03:05
-**Feature activa:** feat-010 release (compartida). CI/CD y despliegue automático ya funcionando.
+**Last Updated (última actualización):** 2026-10-21 03:20
+**Feature activa:** ninguna. feat-010 (release) marcada como `done`.
 **Rama:** `develop` (main desplegado con `v1.0.1`)
 
 ## What's Done (hecho)
@@ -49,6 +49,14 @@
 - **v1.0.1**: primer despliegue **automático** correcto — run `39534507828` (intento 2) en verde: guard, CI
   (sensores + 2 coberturas), build a GHCR y deploy a la EC2. Smoke: `GET /api/health` ok, `GET /` 200.
   El SG quedó limpio (80 a 0.0.0.0/0, 22 solo desde `38.226.159.83/32`).
+
+## Release v1.0.1 y demo (2026-10-21)
+- Todo integrado en `main` y desplegado en la EC2 con el tag `v1.0.1` (run `39534507828`, 6/6 jobs en verde).
+- Demo contra la app desplegada (`http://184.197.133.138`):
+  registro 201 · reader `POST /api/books` → 403 · admin promueve a librarian → 200 · librarian crea libro → 201 ·
+  `GET /api/books?q=cien&genre=Novela` → total 1 · `/api/books/genres` → `["Novela"]` · ISBN duplicado → 409 ·
+  año 3000 → 422 · sin token → 401.
+- feat-010 marcada como `done` en `feature_list.json` con esta evidencia.
 
 ## What's In Progress (en curso)
 - [ ] feat-006: tareas 6.1, 6.3, 6.4 y 7.1 pendientes de cerrar con evidencia.
