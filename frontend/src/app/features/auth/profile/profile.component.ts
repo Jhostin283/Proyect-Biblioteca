@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
+
 import { AuthService, UserProfile } from '../../../core/auth/auth.service';
+import { StateComponent } from '../../../shared/state/state.component';
 
 const ROLE_LABELS: Record<UserProfile['role'], string> = {
   reader: 'Lector',
@@ -12,91 +14,98 @@ const ROLE_LABELS: Record<UserProfile['role'], string> = {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, StateComponent],
   template: `
-    <div class="profile-container">
-      <h2>Mi perfil</h2>
+    <div class="page page--narrow">
+      <header class="page__header">
+        <div class="page__title">
+          <span class="page__eyebrow">Cuenta</span>
+          <h1>Mi perfil</h1>
+          <p class="page__subtitle">Estos son los datos con los que accedes a la biblioteca.</p>
+        </div>
+      </header>
 
-      <p class="loading" *ngIf="loading()">Cargando perfil…</p>
-      <p class="form-error" role="alert" *ngIf="error()">{{ error() }}</p>
+      @if (loading()) {
+        <app-state variant="loading" title="Cargando tu perfil…" />
+      } @else if (error()) {
+        <p class="alert alert--error" role="alert">{{ error() }}</p>
+      } @else {
+        @if (profile(); as user) {
+        <article class="card profile">
+          <div class="profile__header">
+            <span class="profile__avatar" aria-hidden="true">{{ user.full_name.charAt(0) }}</span>
+            <div>
+              <h2>{{ user.full_name }}</h2>
+              <p class="muted">{{ user.email }}</p>
+            </div>
+            <span class="badge" [class]="'badge--' + user.role">{{ roleLabel(user.role) }}</span>
+          </div>
 
-      <dl class="profile-card" *ngIf="profile() as user">
-        <div class="profile-row">
-          <dt>Correo electrónico</dt>
-          <dd>{{ user.email }}</dd>
-        </div>
-        <div class="profile-row">
-          <dt>Nombre completo</dt>
-          <dd>{{ user.full_name }}</dd>
-        </div>
-        <div class="profile-row">
-          <dt>Rol</dt>
-          <dd>{{ roleLabel(user.role) }}</dd>
-        </div>
-        <div class="profile-row">
-          <dt>Estado</dt>
-          <dd [class.active]="user.is_active" [class.disabled]="!user.is_active">
-            {{ user.is_active ? 'Activa' : 'Desactivada' }}
-          </dd>
-        </div>
-      </dl>
+          <dl class="profile__facts">
+            <div>
+              <dt>Correo electrónico</dt>
+              <dd>{{ user.email }}</dd>
+            </div>
+            <div>
+              <dt>Nombre completo</dt>
+              <dd>{{ user.full_name }}</dd>
+            </div>
+            <div>
+              <dt>Rol</dt>
+              <dd>{{ roleLabel(user.role) }}</dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>
+                <span class="badge" [class.badge--inactive]="!user.is_active">
+                  {{ user.is_active ? 'Activa' : 'Desactivada' }}
+                </span>
+              </dd>
+            </div>
+          </dl>
+        </article>
+        }
+      }
     </div>
   `,
   styles: [`
-    .profile-container {
-      max-width: 640px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    h2 {
-      color: #1e293b;
-      margin-bottom: 1rem;
-    }
-    .loading {
-      color: #64748b;
-    }
-    .form-error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      padding: 0.6rem 0.75rem;
-      font-size: 0.95rem;
-    }
-    .profile-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      margin: 0;
-      padding: 0.5rem 1.5rem;
-    }
-    .profile-row {
+    .profile { padding: var(--space-5); }
+    .profile__header {
       display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.9rem 0;
-      border-bottom: 1px solid #f1f5f9;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--color-border);
     }
-    .profile-row:last-child {
-      border-bottom: none;
+    .profile__header h2 { font-size: var(--text-xl); }
+    .profile__header .badge { margin-left: auto; }
+    .profile__avatar {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--color-primary-soft);
+      color: var(--color-primary-strong);
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
     }
-    dt {
-      color: #64748b;
-      font-weight: 500;
+    .profile__facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      padding-top: var(--space-4);
     }
-    dd {
-      margin: 0;
-      color: #1e293b;
-      font-weight: 600;
-      text-align: right;
+    .profile__facts dt {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-ink-faint);
+      margin-bottom: var(--space-1);
     }
-    dd.active {
-      color: #166534;
-    }
-    dd.disabled {
-      color: #991b1b;
-    }
+    .profile__facts dd { font-weight: 600; }
   `]
 })
 export class ProfileComponent implements OnInit {

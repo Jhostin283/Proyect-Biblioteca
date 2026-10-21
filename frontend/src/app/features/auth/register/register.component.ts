@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,145 +8,71 @@ import { AuthService } from '../../../core/auth/auth.service';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
-    <div class="auth-container">
-      <h2>Crear cuenta</h2>
-
-      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
-        <label for="fullName">Nombre completo</label>
-        <input
-          id="fullName"
-          type="text"
-          formControlName="fullName"
-          autocomplete="name"
-          placeholder="Ana López"
-        />
-        <p
-          class="field-error"
-          *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid"
-        >
-          El nombre completo es obligatorio.
+    <div class="page page--narrow auth-page">
+      <header class="auth-page__intro">
+        <span class="page__eyebrow">Cuenta</span>
+        <h1>Crear una cuenta</h1>
+        <p class="page__subtitle">
+          Regístrate para consultar el catálogo. Un administrador puede darte permisos de bibliotecario.
         </p>
+      </header>
 
-        <label for="email">Correo electrónico</label>
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          autocomplete="email"
-          placeholder="ana@correo.com"
-        />
-        <p class="field-error" *ngIf="form.controls.email.touched && form.controls.email.invalid">
-          Introduce un correo electrónico válido.
-        </p>
+      <div class="card">
+        <form [formGroup]="form" (ngSubmit)="submit()" class="card__body auth-form" novalidate>
+          <div class="field">
+            <label for="fullName">Nombre completo</label>
+            <input id="fullName" type="text" formControlName="fullName" autocomplete="name" placeholder="Ana Pérez" />
+            @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+              <span class="field__error">El nombre es obligatorio.</span>
+            }
+          </div>
 
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          autocomplete="new-password"
-          placeholder="Mínimo 8 caracteres"
-        />
-        <p
-          class="field-error"
-          *ngIf="form.controls.password.touched && form.controls.password.invalid"
-        >
-          La contraseña necesita al menos 8 caracteres, una letra y un número.
-        </p>
+          <div class="field">
+            <label for="email">Correo electrónico</label>
+            <input id="email" type="email" formControlName="email" autocomplete="email" placeholder="ana@correo.com" />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <span class="field__error">Introduce un correo electrónico válido.</span>
+            }
+          </div>
 
-        <p class="form-error" role="alert" *ngIf="error()">{{ error() }}</p>
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+              placeholder="Mínimo 8 caracteres, con letras y números"
+            />
+            <span class="field__hint">Al menos 8 caracteres, combinando letras y números.</span>
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <span class="field__error">La contraseña debe tener 8 caracteres con letras y números.</span>
+            }
+          </div>
 
-        <button type="submit" [disabled]="submitting()">
-          {{ submitting() ? 'Creando…' : 'Registrarme' }}
-        </button>
-      </form>
+          @if (error()) {
+            <p class="alert alert--error" role="alert">{{ error() }}</p>
+          }
 
-      <p class="auth-alt">
-        ¿Ya tienes cuenta?
-        <a routerLink="/login">Inicia sesión</a>
-      </p>
+          <button type="submit" class="btn" [disabled]="submitting()">
+            {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
+          </button>
+        </form>
+
+        <div class="card__footer auth-form__alt">
+          ¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
-    .auth-container {
-      max-width: 420px;
-      margin: 3rem auto;
-      padding: 0 1rem;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-    h2 {
-      color: #1e293b;
-      margin: 1.5rem 1.5rem 0.5rem;
-    }
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      padding: 0 1.5rem 1.5rem;
-    }
-    label {
-      font-weight: 500;
-      color: #334155;
-      margin-top: 1rem;
-      margin-bottom: 0.35rem;
-    }
-    input {
-      padding: 0.55rem 0.75rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    input:focus {
-      outline: 2px solid #2563eb;
-      border-color: transparent;
-    }
-    .field-error {
-      color: #b91c1c;
-      font-size: 0.85rem;
-      margin: 0.3rem 0 0;
-    }
-    .form-error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      padding: 0.6rem 0.75rem;
-      margin: 1rem 0 0;
-      font-size: 0.95rem;
-    }
-    button {
-      margin-top: 1.25rem;
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button:hover:not(:disabled) {
-      background: #1d4ed8;
-    }
-    button:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-    .auth-alt {
-      border-top: 1px solid #e2e8f0;
-      margin: 0;
-      padding: 1rem 1.5rem;
-      color: #475569;
-      font-size: 0.95rem;
-    }
-    .auth-alt a {
-      color: #2563eb;
-      font-weight: 500;
-    }
+    .auth-page { padding-top: var(--space-7); }
+    .auth-page__intro { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-5); }
+    .auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
+    .auth-form .btn { margin-top: var(--space-2); }
+    .auth-form__alt { font-size: var(--text-sm); color: var(--color-ink-soft); }
   `]
 })
 export class RegisterComponent {

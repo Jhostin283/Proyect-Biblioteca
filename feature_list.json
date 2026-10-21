@@ -118,6 +118,18 @@
       "status": "done",
       "openspec_change": "release-v1",
       "evidence": "Release v1.0.1 desplegada en la EC2 desde el tag v1.0.1: Deploy run 39534507828 (attempt 2) con 6/6 jobs en verde (guard, sensores, cobertura backend y frontend ≥80 %, build a GHCR, deploy y smoke). http://184.197.133.138 responde 200 y /api/health {\"status\":\"ok\"}. Demo verificada contra la app desplegada: registro 201; login reader; reader POST /api/books → 403; admin promueve al usuario a librarian (PATCH /api/users/4); librarian crea libro → 201; GET /api/books?q=cien&genre=Novela → total 1; GET /api/books/genres → [\"Novela\"]; ISBN duplicado → 409; año 3000 → 422; sin token → 401."
+    },
+    {
+      "id": "feat-011",
+      "name": "Rediseño profesional de la interfaz y portadas de libros",
+      "description": "[RNF-09, RF-10, RF-11, RF-16] Sistema de diseño con tokens y componentes base en todas las vistas; portada por ISBN desde Open Library (solo frontend, sin migración ni cambios de API) con marcador local; vista previa en el formulario; inicio con ilustración SVG local y accesos por rol; responsive 360-1280 px y accesibilidad AA. No implementa lógica de negocio.",
+      "owner": "dev-b",
+      "dependencies": [
+        "feat-008"
+      ],
+      "status": "done",
+      "openspec_change": "redesign-library-ui",
+      "evidence": "Tareas 25/25. PR #2 mergeado en develop (45c7acd). ./scripts/check.sh --full → CHECK OK + SMOKE OK (123 tests de frontend con 99,6 % statements / 90,9 % branches, 88 de backend, ng build y terraform). Revisión visual de las 8 vistas a 1280 px y 390 px con Chromium headless: sin scroll horizontal, 0 imágenes sin alt, 0 campos sin label. Cambio archivado en openspec/changes/archive/2026-10-21-redesign-library-ui; specs principales actualizadas (library-ui nueva, books con portada y vista previa)."
     }
   ]
 }
